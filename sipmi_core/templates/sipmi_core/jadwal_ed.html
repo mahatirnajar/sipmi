@@ -1,0 +1,177 @@
+<!-- sipmi_core/templates/sipmi_core/jadwal_ed.html -->
+{% extends 'sipmi_core/base.html' %}
+
+{% block title %}Jadwal Periode ED - SIPMI{% endblock %}
+
+{% block content %}
+<div id="jadwal-ed" class="content-section">
+    <div class="mb-6">
+        <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Jadwal Periode Evaluasi Diri (ED)</h2>
+        <p class="text-gray-600 text-sm lg:text-base">Kelola jadwal periode evaluasi diri untuk setiap program studi</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h3 class="text-lg font-semibold">Daftar Jadwal ED</h3>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 w-full sm:w-auto" onclick="openModal('jadwalEDModal')">
+                <i class="fas fa-plus mr-2"></i>Tambah Jadwal
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-2 lg:px-4 py-3 text-left text-xs lg:text-sm font-medium text-gray-700">Program Studi</th>
+                        <th class="px-2 lg:px-4 py-3 text-left text-xs lg:text-sm font-medium text-gray-700">Periode</th>
+                        <th class="px-2 lg:px-4 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 hidden sm:table-cell">Tanggal Mulai</th>
+                        <th class="px-2 lg:px-4 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 hidden sm:table-cell">Tanggal Selesai</th>
+                        <th class="px-2 lg:px-4 py-3 text-left text-xs lg:text-sm font-medium text-gray-700">Status</th>
+                        <th class="px-2 lg:px-4 py-3 text-left text-xs lg:text-sm font-medium text-gray-700">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="jadwalEDTable" class="divide-y divide-gray-200">
+                    {% for jadwal in jadwal_list %}
+                    <tr>
+                        <td class="px-2 lg:px-4 py-3 text-xs lg:text-sm">{{ jadwal.program_studi.nama }}</td>
+                        <td class="px-2 lg:px-4 py-3 text-xs lg:text-sm">{{ jadwal.periode }}</td>
+                        <td class="px-2 lg:px-4 py-3 text-xs lg:text-sm hidden sm:table-cell">{{ jadwal.tanggal_mulai|date:"d M Y" }}</td>
+                        <td class="px-2 lg:px-4 py-3 text-xs lg:text-sm hidden sm:table-cell">{{ jadwal.tanggal_selesai|date:"d M Y" }}</td>
+                        <td class="px-2 lg:px-4 py-3">
+                            <span class="bg-{% if jadwal.status == 'selesai' %}green{% elif jadwal.status == 'berlangsung' %}yellow{% else %}gray{% endif %}-100 text-{% if jadwal.status == 'selesai' %}green{% elif jadwal.status == 'berlangsung' %}yellow{% else %}gray{% endif %}-800 px-2 py-1 rounded-full text-xs capitalize">
+                                {{ jadwal.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-2 lg:px-4 py-3">
+                            <button class="text-blue-600 hover:text-blue-800 mr-2 text-sm" onclick="editJadwalED({{ jadwal.pk }})"><i class="fas fa-edit"></i></button>
+                            <a href="{% url 'jadwal_ed_delete' jadwal.pk %}" class="text-red-600 hover:text-red-800 text-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')"><i class="fas fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="px-4 py-2 text-center text-gray-500">Tidak ada jadwal ED.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Jadwal ED Modal -->
+<div id="jadwalEDModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold" id="modalTitle">Tambah/Edit Jadwal ED</h3>
+            <button onclick="closeModal('jadwalEDModal')" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="jadwalEDForm">
+            {% csrf_token %}
+            <input type="hidden" id="jadwalEDId" value="">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Program Studi</label>
+                    <select id="prodi" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Pilih Program Studi</option>
+                        {% for prodi in prodi_list %}
+                        <option value="{{ prodi.pk }}">{{ prodi.nama }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Periode</label>
+                    <input type="text" id="periode" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="2024/2025" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                    <input type="date" id="tanggalMulai" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
+                    <input type="date" id="tanggalSelesai" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <option value="belum_mulai">Belum Mulai</option>
+                        <option value="berlangsung">Berlangsung</option>
+                        <option value="selesai">Selesai</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeModal('jadwalEDModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    // Adjusted JS for Django interaction
+    document.getElementById('jadwalEDForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const jadwalId = document.getElementById('jadwalEDId').value;
+        const url = jadwalId ? `{% url 'jadwal_ed_update' 99999 %}`.replace('99999', jadwalId) : `{% url 'jadwal_ed_create' %}`;
+        const method = jadwalId ? 'PUT' : 'POST'; // Django view handles POST for create/update
+
+        const formData = {
+            prodi: document.getElementById('prodi').value,
+            periode: document.getElementById('periode').value,
+            tanggal_mulai: document.getElementById('tanggalMulai').value,
+            tanggal_selesai: document.getElementById('tanggalSelesai').value,
+            status: document.getElementById('status').value,
+            csrfmiddlewaretoken: document.querySelector('[name=csrfmiddlewaretoken]').value
+        };
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': formData.csrfmiddlewaretoken
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(jadwalId ? 'Jadwal ED berhasil diperbarui!' : 'Jadwal ED berhasil ditambahkan!');
+                location.reload(); // Reload to see changes
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan data.');
+        });
+        closeModal('jadwalEDModal');
+    });
+
+    function editJadwalED(pk) {
+         // Fetch data for the specific JadwalED (could be done via AJAX or passed in context if editing inline)
+         // For simplicity, assume data is available or fetch it.
+         // This example assumes you fetch data or it's passed in context.
+         // You might need a separate view or AJAX call to get the data for editing.
+         // Here's a placeholder:
+         // fetch(`/api/jadwal-ed/${pk}/`) // Example API endpoint
+         // .then(response => response.json())
+         // .then(data => {
+         //     document.getElementById('jadwalEDId').value = data.pk;
+         //     document.getElementById('prodi').value = data.program_studi_pk;
+         //     document.getElementById('periode').value = data.periode;
+         //     document.getElementById('tanggalMulai').value = data.tanggal_mulai;
+         //     document.getElementById('tanggalSelesai').value = data.tanggal_selesai;
+         //     document.getElementById('status').value = data.status;
+         //     document.getElementById('modalTitle').textContent = 'Edit Jadwal ED';
+         //     openModal('jadwalEDModal');
+         // });
+         alert('Edit functionality needs AJAX call or inline editing logic.');
+    }
+
+    // Similar adjustments needed for other modals and views (standar, kriteria, ami, penugasan, auditor, auditi)
+</script>
+{% endblock %}

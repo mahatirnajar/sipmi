@@ -1,0 +1,248 @@
+<!-- sipmi_core/templates/sipmi_core/base.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SIPMI - Universitas Tadulako{% endblock %}</title>
+    {% load static %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'sipmi_core/css/custom.css' %}" rel="stylesheet"> <!-- Link to your custom CSS -->
+    <style>
+        /* Inline styles from the original HTML - move to custom.css if preferred */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-item:hover { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stats-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stats-card-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .stats-card-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .stats-card-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        .sidebar.open { transform: translateX(0); }
+        .overlay { display: none; }
+        .overlay.show { display: block; }
+        @media (min-width: 1024px) {
+            .sidebar { transform: translateX(0); }
+            .overlay { display: none !important; }
+        }
+        .dropdown { display: none; }
+        .dropdown.show { display: block; }
+        .modal { display: none; }
+        .modal.show { display: flex; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg relative">
+        <div class="flex items-center justify-between px-4 lg:px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <!-- Mobile Menu Button -->
+                <button class="lg:hidden text-white" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div class="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center">
+                    <i class="fas fa-university text-blue-600 text-lg lg:text-xl"></i>
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="text-lg lg:text-xl font-bold">SIPMI - Universitas Tadulako</h1>
+                    <p class="text-blue-100 text-xs lg:text-sm">Sistem Informasi Penjaminan Mutu Internal</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 lg:space-x-4">
+                <div class="text-right hidden sm:block">
+                    <p class="font-semibold text-sm lg:text-base">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-blue-100 text-xs lg:text-sm">Administrator</p> <!-- Role logic needed here -->
+                </div>
+                <div class="relative">
+                    <button class="w-8 h-8 lg:w-10 lg:h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors duration-300" onclick="toggleUserDropdown()">
+                        <i class="fas fa-user text-blue-600 text-sm lg:text-base"></i>
+                    </button>
+                    <!-- User Dropdown -->
+                    <div id="userDropdown" class="dropdown absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                        <div class="py-2">
+                            <div class="px-4 py-2 border-b border-gray-200">
+                                <p class="font-semibold text-gray-800 text-sm">{{ user.get_full_name|default:user.username }}</p>
+                                <p class="text-gray-600 text-xs">{{ user.email }}</p>
+                            </div>
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center" onclick="showProfile()">
+                                <i class="fas fa-user-circle mr-3 text-gray-500"></i>
+                                Profil Saya
+                            </button>
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center" onclick="showSettings()">
+                                <i class="fas fa-cog mr-3 text-gray-500"></i>
+                                Pengaturan
+                            </button>
+                            <hr class="my-1">
+                            <a href="{% url 'admin:logout' %}" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"> <!-- Use Django logout URL -->
+                                <i class="fas fa-sign-out-alt mr-3 text-red-500"></i>
+                                Keluar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Mobile Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40" onclick="closeSidebar()"></div>
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar fixed lg:static w-64 bg-white shadow-lg min-h-screen z-50">
+            <nav class="p-4">
+                <div class="space-y-2">
+                    <a href="{% url 'dashboard' %}" class="sidebar-item {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    <a href="{% url 'jadwal_ed_list' %}" class="sidebar-item {% if 'jadwal-ed' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        <span class="font-medium">Jadwal Periode ED</span>
+                    </a>
+                    <a href="{% url 'kelola_standar_list' %}" class="sidebar-item {% if 'kelola-standar' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-cogs mr-3"></i>
+                        <span class="font-medium">Kelola Standar</span>
+                    </a>
+                    <a href="{% url 'form_kriteria_list' %}" class="sidebar-item {% if 'form-kriteria' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-list-check mr-3"></i>
+                        <span class="font-medium">Form Kriteria ED</span>
+                    </a>
+                    <a href="{% url 'lihat_progress' %}" class="sidebar-item {% if 'lihat-progress' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        <span class="font-medium">Lihat Progress</span>
+                    </a>
+                    <a href="{% url 'jadwal_ami_list' %}" class="sidebar-item {% if 'jadwal-ami' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-calendar-check mr-3"></i>
+                        <span class="font-medium">Jadwal AMI</span>
+                    </a>
+                    <a href="{% url 'penugasan_auditor_list' %}" class="sidebar-item {% if 'penugasan-auditor' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-user-tie mr-3"></i>
+                        <span class="font-medium">Penugasan Auditor</span>
+                    </a>
+                    <a href="{% url 'kelola_auditor_list' %}" class="sidebar-item {% if 'kelola-auditor' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-users-cog mr-3"></i>
+                        <span class="font-medium">Kelola Auditor</span>
+                    </a>
+                    <a href="{% url 'kelola_auditi_list' %}" class="sidebar-item {% if 'kelola-auditi' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-users mr-3"></i>
+                        <span class="font-medium">Kelola Auditi</span>
+                    </a>
+                    <a href="{% url 'kelola_password' %}" class="sidebar-item {% if 'kelola-password' in request.path %}bg-blue-600 text-white{% else %}text-gray-700{% endif %} rounded-lg p-3 cursor-pointer transition-all duration-300 flex items-center">
+                        <i class="fas fa-key mr-3"></i>
+                        <span class="font-medium">Kelola Password User</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-0 p-4 lg:p-6">
+            {% block content %}
+            <!-- Content will be injected here by child templates -->
+            {% endblock %}
+        </main>
+    </div>
+    <!-- Modals (Placeholders or include them separately) -->
+    {% block modals %}
+    <!-- Modals will be included or defined in specific templates -->
+    {% endblock %}
+
+    <script src="{% static 'sipmi_core/js/custom.js' %}"></script> <!-- Link to your custom JS -->
+    <script>
+        // Inline JS from the original HTML - move to custom.js if preferred
+        // Global variables (example, adjust based on how you pass data)
+        // let jadwalEDData = []; // Will be populated by views
+        // let standarData = [];
+        // ... other data variables ...
+
+        // Navigation functions (adjusted for Django URLs)
+        function showContent(contentId) {
+            // This function might not be needed if using Django URLs directly in links
+            // But can be adapted if necessary
+            closeSidebar();
+            // Hide all content sections (handled by Django template rendering)
+            // Show selected content (handled by Django template rendering)
+            // Update sidebar active state (handled by template logic above)
+        }
+
+        // Mobile sidebar functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        // User dropdown functions
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+        function showProfile() {
+            alert('Fitur profil akan segera tersedia');
+            toggleUserDropdown();
+        }
+        function showSettings() {
+            alert('Fitur pengaturan akan segera tersedia');
+            toggleUserDropdown();
+        }
+        function signOut() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                // Redirect handled by Django logout URL in template
+                window.location.href = "{% url 'admin:logout' %}"; // Or use Django's built-in logout view URL
+            }
+            toggleUserDropdown();
+        }
+
+        // Modal functions (adjusted for Django)
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            document.body.style.overflow = 'auto';
+            // Reset forms and editing index
+            // This part needs specific logic per modal
+            // const forms = { ... };
+            // if (forms[modalId]) {
+            //     document.getElementById(forms[modalId]).reset();
+            // }
+            // editingIndex = -1;
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const userDropdown = document.getElementById('userDropdown');
+            const userButton = event.target.closest('button');
+            if (!userButton || !userButton.onclick || userButton.onclick.toString().indexOf('toggleUserDropdown') === -1) {
+                userDropdown.classList.remove('show');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                closeSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!-- sipmi_core/templates/sipmi_core/lihat_progress.html -->
+{% extends 'sipmi_core/base.html' %}
+
+{% block title %}Lihat Progress - SIPMI{% endblock %}
+
+{% block content %}
+<div id="lihat-progress" class="content-section">
+    <div class="mb-6">
+        <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Lihat Progress</h2>
+        <p class="text-gray-600 text-sm lg:text-base">Monitor progress evaluasi diri dan audit mutu internal</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+            <h3 class="text-lg font-semibold mb-4">Progress Evaluasi Diri</h3>
+            <div id="progressED" class="space-y-4">
+                <!-- Progress bars populated by Django Template or JS -->
+                {% for item in progress_ed_data %}
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">{{ item.prodi }}</span>
+                        <span class="text-sm text-gray-500">{{ item.progress }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        {% with progress=item.progress %}
+                        <div class="
+                            h-2 rounded-full transition-all duration-300
+                            {% if progress == 100 %}bg-green-500
+                            {% elif progress >= 75 %}bg-blue-500
+                            {% elif progress >= 50 %}bg-yellow-500
+                            {% else %}bg-red-500
+                            {% endif %}
+                        " style="width: {{ progress }}%"></div>
+                        {% endwith %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">Data progress ED tidak tersedia.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+            <h3 class="text-lg font-semibold mb-4">Progress Audit Mutu Internal</h3>
+            <div id="progressAMI" class="space-y-4">
+                <!-- Progress bars populated by Django Template or JS -->
+                {% for item in progress_ami_data %}
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">{{ item.prodi }}</span>
+                        <span class="text-sm text-gray-500">{{ item.progress }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        {% with progress=item.progress %}
+                        <div class="
+                            h-2 rounded-full transition-all duration-300
+                            {% if progress == 100 %}bg-green-500
+                            {% elif progress >= 75 %}bg-blue-500
+                            {% elif progress >= 50 %}bg-yellow-500
+                            {% elif progress == 0 %}bg-gray-400
+                            {% else %}bg-red-500
+                            {% endif %}
+                        " style="width: {{ progress }}%"></div>
+                        {% endwith %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">Data progress AMI tidak tersedia.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- No specific modals for this view -->
+{% endblock %}
