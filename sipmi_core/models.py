@@ -11,29 +11,43 @@ from django.contrib.auth.models import User # Using default User for simplicity,
 #     )
 #     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 
-class ProgramStudi(models.Model):
-    nama = models.CharField(max_length=100)
-    # Add other relevant fields like Fakultas, Kaprodi (link to User?), etc.
+class LembagaAkreditasi(models.Model):
+    nama = models.CharField(max_length=100, unique=True)
+    kode = models.CharField(max_length=20, unique=True) # Misal: LAMTEKNIK, LAMINFOKOM
 
     def __str__(self):
         return self.nama
 
 class Standar(models.Model):
     nama = models.CharField(max_length=255)
+    lembaga_akreditasi = models.ForeignKey(LembagaAkreditasi, on_delete=models.CASCADE, related_name='standar')
     deskripsi = models.TextField()
+    
+    def __str__(self):
+        return self.nama
+
+class ProgramStudi(models.Model):
+    kode = models.CharField(max_length=20, unique=True) # Kode PDDIKTI
+    lembaga_akreditasi = models.ForeignKey(LembagaAkreditasi, on_delete=models.CASCADE, related_name='prodi')
+    nama = models.CharField(max_length=100)
+    koprodi = models.CharField(max_length=100, default="")
 
     def __str__(self):
         return self.nama
 
 class KriteriaED(models.Model):
-    standar = models.ForeignKey(Standar, on_delete=models.CASCADE)
+    standar = models.ForeignKey(Standar, on_delete=models.CASCADE, related_name='kriteria')
     nama = models.CharField(max_length=255)
-    bobot = models.DecimalField(max_digits=5, decimal_places=2) # e.g., 25.00 for 25%
+    bobot = models.DecimalField(max_digits=5, decimal_places=2)
     STATUS_CHOICES = (
         ('aktif', 'Aktif'),
         ('tidak_aktif', 'Tidak Aktif'),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aktif')
+    lembaga_akreditasi = models.ForeignKey(LembagaAkreditasi, on_delete=models.CASCADE, related_name='kriteria') # Bisa juga hanya dari Standar
+
+    def __str__(self):
+        return f"{self.standar.nama} - {self.nama}"
 
     def __str__(self):
         return f"{self.standar.nama} - {self.nama}"
