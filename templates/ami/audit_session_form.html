@@ -1,0 +1,103 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Kelola sesi audit untuk sistem audit mutu internal{% endblock %}
+{% block mobile_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6">
+        <form method="post" class="space-y-4 lg:space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                <div>
+                    <label for="{{ form.program_studi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Program Studi <span class="text-red-500">*</span></label>
+                    {{ form.program_studi }}
+                    {% if form.program_studi.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.program_studi.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tahun_akademik.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tahun Akademik <span class="text-red-500">*</span></label>
+                    {{ form.tahun_akademik }}
+                    {% if form.tahun_akademik.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.tahun_akademik.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.semester.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Semester <span class="text-red-500">*</span></label>
+                    {{ form.semester }}
+                    {% if form.semester.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.semester.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.status.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tanggal_mulai.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai <span class="text-red-500">*</span></label>
+                    {{ form.tanggal_mulai }}
+                    {% if form.tanggal_mulai.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.tanggal_mulai.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tanggal_selesai.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai <span class="text-red-500">*</span></label>
+                    {{ form.tanggal_selesai }}
+                    {% if form.tanggal_selesai.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.tanggal_selesai.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="{{ form.auditor_ketua.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Auditor Ketua <span class="text-red-500">*</span></label>
+                    {{ form.auditor_ketua }}
+                    {% if form.auditor_ketua.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.auditor_ketua.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="{{ form.auditor_anggota.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Auditor Anggota</label>
+                    {{ form.auditor_anggota }}
+                    {% if form.auditor_anggota.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.auditor_anggota.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'ami:audit_session_list' %}" class="w-full sm:w-auto px-4 py-2 mt-2 sm:mt-0 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-center">
+                    Batal
+                </a>
+                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

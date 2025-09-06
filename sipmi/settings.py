@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "sipmi_core",
+    "ami"
 ]
 
 MIDDLEWARE = [
@@ -56,7 +56,7 @@ ROOT_URLCONF = "sipmi.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        'DIRS': [BASE_DIR / 'sipmi_core' / 'templates'], 
+        'DIRS': [BASE_DIR / 'templates'], 
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

@@ -1,0 +1,63 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Unggah dokumen pendukung untuk indikator {{ penilaian.indikator.kode }}{% endblock %}
+{% block mobile_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6">
+        <form method="post" enctype="multipart/form-data" class="space-y-4 lg:space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                <div>
+                    <label for="{{ form.nama.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nama Dokumen <span class="text-red-500">*</span></label>
+                    {{ form.nama }}
+                    {% if form.nama.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.nama.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">File <span class="text-red-500">*</span></label>
+                    {{ form.file }}
+                    {% if form.file.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.file.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="{{ form.deskripsi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                    {{ form.deskripsi }}
+                    {% if form.deskripsi.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.deskripsi.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'ami:penilaian_diri_list' penilaian.audit_session.id %}" class="w-full sm:w-auto px-4 py-2 mt-2 sm:mt-0 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-center">
+                    Batal
+                </a>
+                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Unggah
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

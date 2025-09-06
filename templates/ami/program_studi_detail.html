@@ -1,0 +1,117 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detail Program Studi - {{ program.nama }} | Sistem Audit Mutu Internal{% endblock %}
+{% block page_title %}Detail Program Studi{% endblock %}
+{% block page_subtitle %}{{ program.nama }} ({{ program.jenjang }}){% endblock %}
+{% block mobile_title %}Detail {{ program.nama }}{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="grid grid-cols-1 gap-4 lg:gap-6">
+        <!-- Informasi Program Studi -->
+        <div>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
+                <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Informasi Program Studi</h3>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                        <div>
+                            <p class="text-xs lg:text-sm text-gray-500">Kode</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.kode }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs lg:text-sm text-gray-500">Nama</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.nama }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs lg:text-sm text-gray-500">Fakultas</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.fakultas }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs lg:text-sm text-gray-500">Jenjang</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.jenjang }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs lg:text-sm text-gray-500">Akreditasi</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.akreditasi }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs lg:text-sm text-gray-500">Lembaga Akreditasi</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.lembaga_akreditasi.nama }}</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-xs lg:text-sm text-gray-500">Tanggal Berdiri</p>
+                            <p class="text-lg font-medium text-gray-900">{{ program.tanggal_berdiri|date:"d F Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sesi Audit Terkait -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="px-4 lg:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                    <h3 class="text-lg font-semibold text-gray-900">Sesi Audit Terkait</h3>
+                    <a href="{% url 'ami:audit_session_create' %}" class="text-blue-600 hover:text-blue-900 text-sm font-medium mt-2 sm:mt-0">Tambah Sesi Audit</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periode</th>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Auditor</th>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for session in audit_sessions %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs lg:text-sm font-medium text-gray-900">{{ session.tahun_akademik }} Semester {{ session.semester }}</div>
+                                </td>
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
+                                    {% if session.status == 'selesai' %}
+                                    <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-green-100 text-green-800">Selesai</span>
+                                    {% elif session.status == 'berlangsung' %}
+                                    <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">Berlangsung</span>
+                                    {% else %}
+                                    <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">Dijadwalkan</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-gray-900 hidden md:table-cell">
+                                    {% if session.auditor_ketua %}
+                                        {{ session.auditor_ketua.nama_lengkap }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm font-medium">
+                                    <a href="{% url 'ami:audit_session_detail' session.id %}" class="text-blue-600 hover:text-blue-900">Lihat</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="px-4 lg:px-6 py-4 text-center text-gray-500 text-sm">Tidak ada sesi audit terkait</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

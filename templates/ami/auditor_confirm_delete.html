@@ -1,0 +1,39 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hapus Auditor - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}Hapus Auditor{% endblock %}
+{% block page_subtitle %}Konfirmasi penghapusan auditor{% endblock %}
+{% block mobile_title %}Hapus Auditor{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6 flex items-center justify-center min-h-[calc(100vh-100px)]">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-sm p-4 lg:p-6">
+        <div class="text-center mb-4 lg:mb-6">
+            <div class="mx-auto flex items-center justify-center h-10 lg:h-12 w-10 lg:w-12 rounded-full bg-red-100 mb-3 lg:mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl lg:text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Hapus Auditor</h3>
+            <p class="mt-2 text-sm text-gray-500">
+                Apakah Anda yakin ingin menghapus auditor <strong>{{ auditor.nama_lengkap }}</strong>?
+            </p>
+            <p class="mt-1 text-sm text-gray-500">
+                Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.
+            </p>
+        </div>
+        
+        <div class="mt-4 lg:mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:justify-center sm:space-x-4">
+            <a href="{% url 'ami:auditor_list' %}" class="w-full sm:w-auto px-4 py-2 mt-2 sm:mt-0 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-center">
+                Batal
+            </a>
+            <form method="post" class="w-full sm:w-auto">
+                {% csrf_token %}
+                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Hapus
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
