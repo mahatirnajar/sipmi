@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hapus Deskripsi Skor - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}Hapus Deskripsi Skor{% endblock %}
+{% block page_subtitle %}Konfirmasi penghapusan deskripsi skor indikator{% endblock %}
+{% block mobile_title %}Hapus Skor Indikator{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden max-w-2xl mx-auto">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Konfirmasi Penghapusan</h3>
+        </div>
+        
+        <div class="px-4 lg:px-6 py-6">
+            <div class="mb-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                Peringatan: Penghapusan deskripsi skor ini tidak dapat dibatalkan.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 mb-4">Apakah Anda yakin ingin menghapus deskripsi skor berikut?</p>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-lg font-semibold text-gray-900">Skor {{ skor.skor }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ skor.deskripsi|truncatechars:100 }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Indikator: {{ skor.indikator.kode }}</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                <a href="{% url 'ami:skor_indikator_list' %}" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Batal
+                </a>
+                <form method="post" class="w-full sm:w-auto">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                        Hapus Deskripsi Skor
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

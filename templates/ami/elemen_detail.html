@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detail Elemen - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}Detail Elemen{% endblock %}
+{% block page_subtitle %}Informasi lengkap elemen penilaian{% endblock %}
+{% block mobile_title %}Detail Elemen{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Kode</h3>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">{{ elemen.kode }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Kriteria</h3>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">{{ elemen.kriteria.kode }} - {{ elemen.kriteria.nama }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="px-4 lg:px-6 py-4">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">{{ elemen.nama }}</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Deskripsi</h3>
+                <p class="text-gray-700">{{ elemen.deskripsi|linebreaks }}</p>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Indikator dalam Elemen Ini</h3>
+                
+                {% if indikator_list %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                                <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for indikator in indikator_list %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs lg:text-sm font-medium text-gray-900">{{ indikator.kode }}</div>
+                                </td>
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
+                                    {{ indikator.deskripsi|truncatechars:50 }}
+                                </td>
+                                <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm font-medium">
+                                    <div class="flex flex-wrap gap-1">
+                                        <a href="{% url 'ami:indikator_detail' indikator.id %}" class="text-blue-600 hover:text-blue-900">Lihat</a>
+                                        <span class="hidden md:inline">|</span>
+                                        <a href="{% url 'ami:indikator_update' indikator.id %}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <i class="fas fa-list-check text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-500">Belum ada indikator yang terdaftar untuk elemen ini.</p>
+                    <a href="{% url 'ami:indikator_create_by_elemen' elemen.id %}" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                        Tambah Indikator
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t border-gray-200 pt-4">
+                <a href="{% url 'ami:elemen_update' elemen.id %}" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Edit Elemen
+                </a>
+                <a href="{% url 'ami:elemen_delete' elemen.id %}" class="w-full sm:w-auto px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50">
+                    Hapus Elemen
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

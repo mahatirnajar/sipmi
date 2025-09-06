@@ -13,7 +13,11 @@ from .models import (
     PenilaianDiri,
     Audit,
     DokumenPendukung,
-    RekomendasiTindakLanjut
+    RekomendasiTindakLanjut,
+    Kriteria,
+    Elemen,
+    IndikatorPenilaian,
+    SkorIndikator
 )
 from .forms import (
     LembagaAkreditasiForm,
@@ -23,7 +27,11 @@ from .forms import (
     PenilaianDiriForm,
     AuditForm,
     DokumenPendukungForm,
-    RekomendasiTindakLanjutForm
+    RekomendasiTindakLanjutForm,
+    KriteriaForm,
+    ElemenForm,
+    IndikatorPenilaianForm,
+    SkorIndikatorForm
 )
 
 # ----------------------------
@@ -786,3 +794,408 @@ def laporan_audit(request, session_id):
     }
     
     return render(request, 'ami/laporan_audit.html', context)
+
+# ----------------------------
+# Views untuk Kriteria
+# ----------------------------
+@login_required
+def kriteria_list(request, lembaga_id=None):
+    """View untuk menampilkan daftar kriteria berdasarkan lembaga akreditasi"""
+    lembaga = None
+    if lembaga_id:
+        lembaga = get_object_or_404(LembagaAkreditasi, pk=lembaga_id)
+        kriteria_list = Kriteria.objects.filter(lembaga_akreditasi=lembaga).order_by('kode')
+    else:
+        kriteria_list = Kriteria.objects.all().order_by('kode')
+    
+    # Pagination
+    paginator = Paginator(kriteria_list, 10)
+    page_number = request.GET.get('page')
+    kriteria = paginator.get_page(page_number)
+    
+    # Ambil semua lembaga akreditasi untuk filter
+    lembaga_akreditasi = LembagaAkreditasi.objects.all().order_by('nama')
+    
+    return render(request, 'ami/kriteria_list.html', {
+        'kriteria': kriteria,
+        'lembaga_akreditasi': lembaga_akreditasi,
+        'selected_lembaga': lembaga
+    })
+
+@login_required
+def kriteria_create(request, lembaga_id=None):
+    """View untuk membuat kriteria baru"""
+    # Hanya staff yang bisa mengelola kriteria
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    lembaga = None
+    if lembaga_id:
+        lembaga = get_object_or_404(LembagaAkreditasi, pk=lembaga_id)
+    
+    if request.method == 'POST':
+        form = KriteriaForm(request.POST)
+        if form.is_valid():
+            kriteria = form.save()
+            messages.success(request, f'Kriteria "{kriteria.nama}" berhasil dibuat.')
+            return redirect('ami:kriteria_list')
+    else:
+        initial = {'lembaga_akreditasi': lembaga} if lembaga else {}
+        form = KriteriaForm(initial=initial)
+    
+    return render(request, 'ami/kriteria_form.html', {
+        'form': form,
+        'title': 'Tambah Kriteria',
+        'lembaga': lembaga
+    })
+
+@login_required
+def kriteria_update(request, pk):
+    """View untuk memperbarui kriteria"""
+    # Hanya staff yang bisa mengelola kriteria
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    kriteria = get_object_or_404(Kriteria, pk=pk)
+    if request.method == 'POST':
+        form = KriteriaForm(request.POST, instance=kriteria)
+        if form.is_valid():
+            kriteria = form.save()
+            messages.success(request, f'Kriteria "{kriteria.nama}" berhasil diperbarui.')
+            return redirect('ami:kriteria_list', lembaga_id=kriteria.lembaga_akreditasi.id)
+    else:
+        form = KriteriaForm(instance=kriteria)
+    
+    return render(request, 'ami/kriteria_form.html', {
+        'form': form,
+        'title': f'Edit {kriteria.kode} - {kriteria.nama}',
+        'lembaga': kriteria.lembaga_akreditasi
+    })
+
+@login_required
+def kriteria_detail(request, pk):
+    """View untuk detail kriteria"""
+    kriteria = get_object_or_404(Kriteria, pk=pk)
+    elemen_list = kriteria.elemen.all().order_by('kode')
+    
+    return render(request, 'ami/kriteria_detail.html', {
+        'kriteria': kriteria,
+        'elemen_list': elemen_list
+    })
+
+@login_required
+def kriteria_delete(request, pk):
+    """View untuk menghapus kriteria"""
+    # Hanya staff yang bisa mengelola kriteria
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    kriteria = get_object_or_404(Kriteria, pk=pk)
+    if request.method == 'POST':
+        nama = kriteria.nama
+        # lembaga_id = kriteria.lembaga_akreditasi.id
+        kriteria.delete()
+        messages.success(request, f'Kriteria "{nama}" berhasil dihapus.')
+        return redirect('ami:kriteria_list')
+    
+    return render(request, 'ami/kriteria_confirm_delete.html', {
+        'kriteria': kriteria
+    })
+
+# ----------------------------
+# Views untuk Elemen
+# ----------------------------
+@login_required
+def elemen_list(request, kriteria_id=None):
+    """View untuk menampilkan daftar elemen berdasarkan kriteria"""
+    kriteria = None
+    if kriteria_id:
+        kriteria = get_object_or_404(Kriteria, pk=kriteria_id)
+        elemen_list = Elemen.objects.filter(kriteria=kriteria).order_by('kode')
+    else:
+        elemen_list = Elemen.objects.all().order_by('kode')
+    
+    # Pagination
+    paginator = Paginator(elemen_list, 10)
+    page_number = request.GET.get('page')
+    elemen = paginator.get_page(page_number)
+    
+    return render(request, 'ami/elemen_list.html', {
+        'elemen': elemen,
+        'kriteria': kriteria
+    })
+
+@login_required
+def elemen_create(request, kriteria_id=None):
+    """View untuk membuat elemen baru"""
+    # Hanya staff yang bisa mengelola elemen
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    kriteria = None
+    if kriteria_id:
+        kriteria = get_object_or_404(Kriteria, pk=kriteria_id)
+    
+    if request.method == 'POST':
+        form = ElemenForm(request.POST)
+        if form.is_valid():
+            elemen = form.save()
+            messages.success(request, f'Elemen "{elemen.nama}" berhasil dibuat.')
+            return redirect('ami:elemen_list', kriteria_id=kriteria_id)
+    else:
+        initial = {'kriteria': kriteria} if kriteria else {}
+        form = ElemenForm(initial=initial)
+    
+    return render(request, 'ami/elemen_form.html', {
+        'form': form,
+        'title': 'Tambah Elemen',
+        'kriteria': kriteria
+    })
+
+@login_required
+def elemen_update(request, pk):
+    """View untuk memperbarui elemen"""
+    # Hanya staff yang bisa mengelola elemen
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    elemen = get_object_or_404(Elemen, pk=pk)
+    if request.method == 'POST':
+        form = ElemenForm(request.POST, instance=elemen)
+        if form.is_valid():
+            elemen = form.save()
+            messages.success(request, f'Elemen "{elemen.nama}" berhasil diperbarui.')
+            return redirect('ami:elemen_list', kriteria_id=elemen.kriteria.id)
+    else:
+        form = ElemenForm(instance=elemen)
+    
+    return render(request, 'ami/elemen_form.html', {
+        'form': form,
+        'title': f'Edit {elemen.kode} - {elemen.nama}',
+        'kriteria': elemen.kriteria
+    })
+
+@login_required
+def elemen_detail(request, pk):
+    """View untuk detail elemen"""
+    elemen = get_object_or_404(Elemen, pk=pk)
+    indikator_list = elemen.indikator.all().order_by('kode')
+    
+    return render(request, 'ami/elemen_detail.html', {
+        'elemen': elemen,
+        'indikator_list': indikator_list
+    })
+
+@login_required
+def elemen_delete(request, pk):
+    """View untuk menghapus elemen"""
+    # Hanya staff yang bisa mengelola elemen
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    elemen = get_object_or_404(Elemen, pk=pk)
+    if request.method == 'POST':
+        nama = elemen.nama
+        kriteria_id = elemen.kriteria.id
+        elemen.delete()
+        messages.success(request, f'Elemen "{nama}" berhasil dihapus.')
+        return redirect('ami:elemen_list', kriteria_id=kriteria_id)
+    
+    return render(request, 'ami/elemen_confirm_delete.html', {
+        'elemen': elemen
+    })
+
+# ----------------------------
+# Views untuk Indikator Penilaian
+# ----------------------------
+@login_required
+def indikator_list(request, elemen_id=None):
+    """View untuk menampilkan daftar indikator berdasarkan elemen"""
+    elemen = None
+    if elemen_id:
+        elemen = get_object_or_404(Elemen, pk=elemen_id)
+        indikator_list = IndikatorPenilaian.objects.filter(elemen=elemen).order_by('kode')
+    else:
+        indikator_list = IndikatorPenilaian.objects.all().order_by('kode')
+    
+    # Pagination
+    paginator = Paginator(indikator_list, 10)
+    page_number = request.GET.get('page')
+    indikator = paginator.get_page(page_number)
+    
+    return render(request, 'ami/indikator_list.html', {
+        'indikator': indikator,
+        'elemen': elemen
+    })
+
+@login_required
+def indikator_create(request, elemen_id=None):
+    """View untuk membuat indikator penilaian baru"""
+    # Hanya staff yang bisa mengelola indikator
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    elemen = None
+    if elemen_id:
+        elemen = get_object_or_404(Elemen, pk=elemen_id)
+    
+    if request.method == 'POST':
+        form = IndikatorPenilaianForm(request.POST)
+        if form.is_valid():
+            indikator = form.save()
+            messages.success(request, f'Indikator "{indikator.kode}" berhasil dibuat.')
+            return redirect('ami:indikator_list', elemen_id=elemen_id)
+    else:
+        initial = {'elemen': elemen} if elemen else {}
+        form = IndikatorPenilaianForm(initial=initial)
+    
+    return render(request, 'ami/indikator_form.html', {
+        'form': form,
+        'title': 'Tambah Indikator Penilaian',
+        'elemen': elemen
+    })
+
+@login_required
+def indikator_update(request, pk):
+    """View untuk memperbarui indikator penilaian"""
+    # Hanya staff yang bisa mengelola indikator
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    indikator = get_object_or_404(IndikatorPenilaian, pk=pk)
+    if request.method == 'POST':
+        form = IndikatorPenilaianForm(request.POST, instance=indikator)
+        if form.is_valid():
+            indikator = form.save()
+            messages.success(request, f'Indikator "{indikator.kode}" berhasil diperbarui.')
+            return redirect('ami:indikator_list', elemen_id=indikator.elemen.id)
+    else:
+        form = IndikatorPenilaianForm(instance=indikator)
+    
+    return render(request, 'ami/indikator_form.html', {
+        'form': form,
+        'title': f'Edit {indikator.kode}',
+        'elemen': indikator.elemen
+    })
+
+@login_required
+def indikator_detail(request, pk):
+    """View untuk detail indikator penilaian"""
+    indikator = get_object_or_404(IndikatorPenilaian, pk=pk)
+    skor_indikator_list = indikator.skor_indikator.all().order_by('-skor')
+    
+    return render(request, 'ami/indikator_detail.html', {
+        'indikator': indikator,
+        'skor_indikator_list': skor_indikator_list
+    })
+
+@login_required
+def indikator_delete(request, pk):
+    """View untuk menghapus indikator penilaian"""
+    # Hanya staff yang bisa mengelola indikator
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    indikator = get_object_or_404(IndikatorPenilaian, pk=pk)
+    if request.method == 'POST':
+        kode = indikator.kode
+        elemen_id = indikator.elemen.id
+        indikator.delete()
+        messages.success(request, f'Indikator "{kode}" berhasil dihapus.')
+        return redirect('ami:indikator_list', elemen_id=elemen_id)
+    
+    return render(request, 'ami/indikator_confirm_delete.html', {
+        'indikator': indikator
+    })
+
+# ----------------------------
+# Views untuk Skor Indikator
+# ----------------------------
+@login_required
+def skor_indikator_list(request, indikator_id=None):
+    """View untuk menampilkan daftar skor indikator berdasarkan indikator penilaian"""
+    indikator = None
+    if indikator_id:
+        indikator = get_object_or_404(IndikatorPenilaian, pk=indikator_id)
+        skor_list = SkorIndikator.objects.filter(indikator=indikator).order_by('-skor')
+    else:
+        skor_list = SkorIndikator.objects.all().order_by('-skor')
+    
+    # Pagination
+    paginator = Paginator(skor_list, 10)
+    page_number = request.GET.get('page')
+    skor_indikator = paginator.get_page(page_number)
+    
+    return render(request, 'ami/skor_indikator_list.html', {
+        'skor_indikator': skor_indikator,
+        'indikator': indikator
+    })
+
+@login_required
+def skor_indikator_create(request, indikator_id=None):
+    """View untuk membuat skor indikator baru"""
+    # Hanya staff yang bisa mengelola skor indikator
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    indikator = None
+    if indikator_id:
+        indikator = get_object_or_404(IndikatorPenilaian, pk=indikator_id)
+    
+    if request.method == 'POST':
+        form = SkorIndikatorForm(request.POST)
+        if form.is_valid():
+            skor = form.save()
+            messages.success(request, f'Skor {skor.skor} untuk indikator "{indikator.kode}" berhasil dibuat.')
+            return redirect('ami:skor_indikator_list', indikator_id=indikator_id)
+    else:
+        initial = {'indikator': indikator} if indikator else {}
+        form = SkorIndikatorForm(initial=initial)
+    
+    return render(request, 'ami/skor_indikator_form.html', {
+        'form': form,
+        'title': 'Tambah Skor Indikator',
+        'indikator': indikator
+    })
+
+@login_required
+def skor_indikator_update(request, pk):
+    """View untuk memperbarui skor indikator"""
+    # Hanya staff yang bisa mengelola skor indikator
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    skor = get_object_or_404(SkorIndikator, pk=pk)
+    if request.method == 'POST':
+        form = SkorIndikatorForm(request.POST, instance=skor)
+        if form.is_valid():
+            skor = form.save()
+            messages.success(request, f'Skor {skor.skor} untuk indikator "{skor.indikator.kode}" berhasil diperbarui.')
+            return redirect('ami:skor_indikator_list', indikator_id=skor.indikator.id)
+    else:
+        form = SkorIndikatorForm(instance=skor)
+    
+    return render(request, 'ami/skor_indikator_form.html', {
+        'form': form,
+        'title': f'Edit Skor {skor.skor}',
+        'indikator': skor.indikator
+    })
+
+@login_required
+def skor_indikator_delete(request, pk):
+    """View untuk menghapus skor indikator"""
+    # Hanya staff yang bisa mengelola skor indikator
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
+        
+    skor = get_object_or_404(SkorIndikator, pk=pk)
+    if request.method == 'POST':
+        skor_value = skor.skor
+        indikator_id = skor.indikator.id
+        skor.delete()
+        messages.success(request, f'Skor {skor_value} berhasil dihapus.')
+        return redirect('ami:skor_indikator_list', indikator_id=indikator_id)
+    
+    return render(request, 'ami/skor_indikator_confirm_delete.html', {
+        'skor': skor
+    })

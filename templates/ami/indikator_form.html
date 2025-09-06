@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Formulir pengelolaan indikator penilaian{% endblock %}
+{% block mobile_title %}Form Indikator{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.kode.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Kode Indikator</label>
+                        {{ form.kode }}
+                        {% if form.kode.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.kode.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.elemen.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Elemen</label>
+                        {{ form.elemen }}
+                        {% if form.elemen.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.elemen.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.deskripsi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                    {{ form.deskripsi }}
+                    {% if form.deskripsi.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.deskripsi.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.panduan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Panduan Penilaian</label>
+                    {{ form.panduan }}
+                    {% if form.panduan.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.panduan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.skor_maksimal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Skor Maksimal</label>
+                        {{ form.skor_maksimal }}
+                        {% if form.skor_maksimal.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.skor_maksimal.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Perhitungan Khusus</label>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="id_memiliki_perhitungan_khusus" name="memiliki_perhitungan_khusus" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                {% if form.memiliki_perhitungan_khusus.value %}checked{% endif %}>
+                            <label for="id_memiliki_perhitungan_khusus" class="ml-2 block text-sm text-gray-900">
+                                Memiliki perhitungan khusus
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="rumus-perhitungan-container" style="display: {% if form.memiliki_perhitungan_khusus.value %}block{% else %}none{% endif %};">
+                    <label for="{{ form.rumus_perhitungan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Rumus Perhitungan</label>
+                    {{ form.rumus_perhitungan }}
+                    {% if form.rumus_perhitungan.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.rumus_perhitungan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                    <a href="{% if elemen %}{% url 'ami:indikator_list' elemen.id %}{% else %}{% url 'ami:indikator_list' %}{% endif %}" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Batal
+                    </a>
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('id_memiliki_perhitungan_khusus');
+        const rumusContainer = document.getElementById('rumus-perhitungan-container');
+        
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                rumusContainer.style.display = 'block';
+            } else {
+                rumusContainer.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}
