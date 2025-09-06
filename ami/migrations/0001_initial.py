@@ -205,7 +205,7 @@ class Migration(migrations.Migration):
                 ('fakultas', models.CharField(max_length=255)),
                 ('jenjang', models.CharField(choices=[('D3', 'Diploma 3'), ('D4', 'Diploma 4'), ('S1', 'Sarjana'), ('S2', 'Magister'), ('S3', 'Doktor')], max_length=50)),
                 ('akreditasi', models.CharField(blank=True, max_length=2, null=True)),
-                ('tanggal_berdiri', models.DateField(blank=True, null=True)),
+                ('tanggal_akreditasi', models.DateField(blank=True, null=True)),
                 ('lembaga_akreditasi', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='program_studi', to='ami.lembagaakreditasi')),
             ],
             options={

@@ -27,15 +27,15 @@ class LembagaAkreditasiForm(forms.ModelForm):
 class ProgramStudiForm(forms.ModelForm):
     class Meta:
         model = ProgramStudi
-        fields = ['lembaga_akreditasi', 'kode', 'nama', 'fakultas', 'jenjang', 'akreditasi', 'tanggal_berdiri']
+        fields = ['lembaga_akreditasi', 'kode', 'nama', 'fakultas', 'jenjang', 'akreditasi', 'tanggal_akreditasi']
         widgets = {
             'lembaga_akreditasi': forms.Select(attrs={'class': 'form-control'}),
             'kode': forms.TextInput(attrs={'class': 'form-control'}),
             'nama': forms.TextInput(attrs={'class': 'form-control'}),
-            'fakultas': forms.TextInput(attrs={'class': 'form-control'}),
+            'fakultas': forms.Select(attrs={'class': 'form-control'}),
             'jenjang': forms.Select(attrs={'class': 'form-control'}),
-            'akreditasi': forms.TextInput(attrs={'class': 'form-control'}),
-            'tanggal_berdiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'akreditasi': forms.Select(attrs={'class': 'form-control'}),
+            'tanggal_akreditasi': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
 class AuditorForm(forms.ModelForm):

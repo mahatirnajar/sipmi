@@ -1,5 +1,6 @@
 
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 {% load static %}
 
 {% block title %}{{ title }} - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
@@ -26,7 +27,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 <div>
                     <label for="{{ form.lembaga_akreditasi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Lembaga Akreditasi <span class="text-red-500">*</span></label>
-                    {{ form.lembaga_akreditasi }}
+                    {{ form.lembaga_akreditasi |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
                     {% if form.lembaga_akreditasi.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.lembaga_akreditasi.errors|join:", " }}</p>
                     {% endif %}
@@ -34,7 +35,7 @@
                 
                 <div>
                     <label for="{{ form.kode.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                    {{ form.kode }}
+                    {{ form.kode |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
                     {% if form.kode.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.kode.errors|join:", " }}</p>
                     {% endif %}
@@ -42,7 +43,7 @@
                 
                 <div class="md:col-span-2">
                     <label for="{{ form.nama.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
-                    {{ form.nama }}
+                    {{ form.nama |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
                     {% if form.nama.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.nama.errors|join:", " }}</p>
                     {% endif %}
@@ -50,7 +51,7 @@
                 
                 <div>
                     <label for="{{ form.fakultas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Fakultas <span class="text-red-500">*</span></label>
-                    {{ form.fakultas }}
+                    {{ form.fakultas |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
                     {% if form.fakultas.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.fakultas.errors|join:", " }}</p>
                     {% endif %}
@@ -58,7 +59,7 @@
                 
                 <div>
                     <label for="{{ form.jenjang.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Jenjang <span class="text-red-500">*</span></label>
-                    {{ form.jenjang }}
+                    {{ form.jenjang |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
                     {% if form.jenjang.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.jenjang.errors|join:", " }}</p>
                     {% endif %}
@@ -66,17 +67,17 @@
                 
                 <div>
                     <label for="{{ form.akreditasi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Akreditasi <span class="text-red-500">*</span></label>
-                    {{ form.akreditasi }}
+                    {{ form.akreditasi |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
                     {% if form.akreditasi.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.akreditasi.errors|join:", " }}</p>
                     {% endif %}
                 </div>
                 
                 <div>
-                    <label for="{{ form.tanggal_berdiri.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Berdiri</label>
-                    {{ form.tanggal_berdiri }}
-                    {% if form.tanggal_berdiri.errors %}
-                    <p class="mt-1 text-xs text-red-600">{{ form.tanggal_berdiri.errors|join:", " }}</p>
+                    <label for="{{ form.tanggal_akreditasi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tanggal SK Akreditasi</label>
+                    {{ form.tanggal_akreditasi |add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
+                    {% if form.tanggal_akreditasi.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.tanggal_akreditasi.errors|join:", " }}</p>
                     {% endif %}
                 </div>
             </div>

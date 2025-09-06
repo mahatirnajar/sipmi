@@ -95,7 +95,20 @@ class ProgramStudi(models.Model):
     lembaga_akreditasi = models.ForeignKey(LembagaAkreditasi, on_delete=models.PROTECT, related_name='program_studi')
     kode = models.CharField(max_length=10, unique=True)
     nama = models.CharField(max_length=255)
-    fakultas = models.CharField(max_length=255)
+    fakultas = models.CharField(max_length=200, choices=[
+        ('FKIP', 'FKIP'),
+        ('FISIP', 'FISIP'),
+        ('FEB', 'FEB'),
+        ('FAKUM', 'FAKUM'),
+        ('FAPERTA', 'FAPERTA'),
+        ('FATEK', 'FATEK'),
+        ('FMIPA', 'FMIPA'),
+        ('FAHUT', 'FAHUT'),
+        ('FK', 'FK'),
+        ('FAPETKAN', 'FAPETKAN'),
+        ('FKM', 'FKM'),
+        ('Pascasarjana', 'Pascasarjana'),
+    ])
     jenjang = models.CharField(max_length=50, choices=[
         ('D3', 'Diploma 3'),
         ('D4', 'Diploma 4'),
@@ -103,8 +116,16 @@ class ProgramStudi(models.Model):
         ('S2', 'Magister'),
         ('S3', 'Doktor'),
     ])
-    akreditasi = models.CharField(max_length=2, blank=True, null=True)
-    tanggal_berdiri = models.DateField(blank=True, null=True)
+    akreditasi = models.CharField(max_length=50, blank=True, null=True, choices=[
+        ('unggul', 'UNGGUL'),
+        ('baik_sekali', 'BAIK SEKALI'),
+        ('baik', 'BAIK'),
+        ('A', 'A'),
+        ('B', 'B'),
+        ('C', 'C'),
+        ('belum', 'Belum Terakreditasi')
+    ] )
+    tanggal_akreditasi = models.DateField(blank=True, null=True)
     
     class Meta:
         verbose_name = "Program Studi"

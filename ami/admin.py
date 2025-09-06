@@ -125,7 +125,7 @@ class ProgramStudiAdmin(admin.ModelAdmin):
             'fields': ('lembaga_akreditasi', 'kode', 'nama', 'jenjang')
         }),
         ('Detail Program Studi', {
-            'fields': ('fakultas', 'akreditasi', 'tanggal_berdiri'),
+            'fields': ('fakultas', 'akreditasi', 'tanggal_akreditasi'),
             'classes': ('collapse',)
         }),
     )
