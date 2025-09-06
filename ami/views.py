@@ -33,7 +33,6 @@ from .forms import (
     IndikatorPenilaianForm,
     SkorIndikatorForm
 )
-
 # ----------------------------
 # Helper Functions
 # ----------------------------
@@ -41,23 +40,28 @@ def get_user_program_studi(user):
     """Mendapatkan program studi yang terkait dengan user"""
     try:
         return user.programstudi
-    except:
+    except AttributeError:
         return None
 
 def get_user_auditor(user):
     """Mendapatkan objek auditor yang terkait dengan user"""
     try:
         return user.auditor
-    except:
+    except AttributeError:
         return None
 
 def check_program_studi_permission(user, program_studi):
     """Memeriksa apakah user memiliki izin untuk mengakses program studi tertentu"""
+    if user.is_superuser:
+        return True
     user_program_studi = get_user_program_studi(user)
     return user_program_studi == program_studi
 
 def check_audit_session_permission(user, audit_session):
     """Memeriksa apakah user memiliki izin untuk mengakses sesi audit tertentu"""
+    if user.is_superuser:
+        return True
+
     # Pemeriksaan untuk program studi
     if get_user_program_studi(user) == audit_session.program_studi:
         return True
@@ -69,7 +73,6 @@ def check_audit_session_permission(user, audit_session):
                 user_auditor in audit_session.auditor_anggota.all())
     
     return False
-
 # ----------------------------
 # Dashboard Views
 # ----------------------------
@@ -83,7 +86,7 @@ def dashboard(request):
     total_audit = Audit.objects.count()
     
     # Ambil beberapa data terbaru
-    latest_audit_sessions = AuditSession.objects.select_related('program_studi').order_by('-tanggal_mulai')[:5]
+    latest_audit_sessions = AuditSession.objects.select_related('program_studi').order_by('-tanggal_mulai_penilaian_mandiri')[:5]
     latest_penilaian_diri = PenilaianDiri.objects.select_related(
         'audit_session', 'audit_session__program_studi', 'indikator'
     ).order_by('-tanggal_penilaian')[:5]
@@ -238,7 +241,7 @@ def program_studi_create(request):
 def program_studi_detail(request, pk):
     """View untuk detail program studi"""
     program = get_object_or_404(ProgramStudi, pk=pk)
-    audit_sessions = program.audit_sessions.all().order_by('-tanggal_mulai')
+    audit_sessions = program.audit_sessions.all().order_by('-tanggal_mulai_penilaian_mandiri')
     
     context = {
         'program': program,
@@ -342,7 +345,7 @@ def audit_session_list(request):
     """View untuk menampilkan daftar sesi audit"""
     audit_session_list = AuditSession.objects.select_related(
         'program_studi', 'auditor_ketua'
-    ).prefetch_related('auditor_anggota').all().order_by('-tanggal_mulai')
+    ).prefetch_related('auditor_anggota').all().order_by('-tanggal_mulai_penilaian_mandiri')
     
     # Filter berdasarkan program studi jika ada parameter
     program_studi_id = request.GET.get('program_studi')

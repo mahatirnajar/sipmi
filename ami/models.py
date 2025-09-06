@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 # Model untuk kategori kondisi yang digunakan oleh auditor
 class KategoriKondisi(models.TextChoices):
@@ -71,6 +73,21 @@ class IndikatorPenilaian(models.Model):
         verbose_name_plural = "Indikator Penilaian"
         unique_together = ['elemen', 'kode']
         ordering = ['kode']
+    
+    def clean(self):
+        super().clean()
+        if self.skor is not None:
+            if self.skor < 0:
+                raise ValidationError({'skor': 'Skor tidak boleh kurang dari 0.'})
+            if self.indikator and self.skor > self.indikator.skor_maksimal:
+                raise ValidationError({
+                    'skor': f'Skor tidak boleh melebihi {self.indikator.skor_maksimal} (skor maksimal untuk indikator ini).'
+                })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # memastikan validasi dijalankan sebelum save
+        super().save(*args, **kwargs)
+
     
     def __str__(self):
         return f"{self.kode} - {self.deskripsi[:50]}..."
@@ -161,22 +178,52 @@ class AuditSession(models.Model):
         ('G', 'Ganjil'),
         ('P', 'Genap'),
     ])
-    tanggal_mulai = models.DateField()
-    tanggal_selesai = models.DateField(blank=True, null=True)
+    tanggal_mulai_penilaian_mandiri = models.DateField(blank=True, null=True)
+    tanggal_selesai_penilaian_mandiri = models.DateField(blank=True, null=True)
+    tanggal_selesai_penilian_auditor = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('DRAFT', 'Draft'),
-        ('DIAJUKAN', 'Diajukan'),
-        ('DISETUJUI', 'Disetujui'),
-        ('DITOLAK', 'Ditolak'),
+        ('PENIALAIN_MANDIRI', 'Penilaian Mandiri'),
+        ('PENIALAIN_AUDITOR', 'Penilaian Auditor'),
+        ('SELESAI', 'SELESAI'),
     ], default='DRAFT')
     auditor_ketua = models.ForeignKey(Auditor, on_delete=models.SET_NULL, null=True, blank=True, related_name='ketua_audit_sessions')
     auditor_anggota = models.ManyToManyField(Auditor, related_name='anggota_audit_sessions', blank=True)
     
+    def update_status(self):
+        """Perbarui status berdasarkan tanggal saat ini."""
+        today = timezone.now().date()
+
+        # Jika belum ada tanggal mulai mandiri, tetap di DRAFT
+        if not self.tanggal_mulai_penilaian_mandiri:
+            return
+
+        # Draft → Penilaian Mandiri
+        if self.status == 'DRAFT' and today >= self.tanggal_mulai_penilaian_mandiri:
+            self.status = 'PENILAIAN_MANDIRI'  # Perbaiki typo: PENIALAIN → PENILAIAN
+            self.save(update_fields=['status'])
+            return
+
+        # Penilaian Mandiri → Penilaian Auditor
+        if self.status == 'PENILAIAN_MANDIRI' and self.tanggal_selesai_penilaian_mandiri:
+            if today > self.tanggal_selesai_penilaian_mandiri and self.tanggal_mulai_penilaian_mandiri_penilaian_auditor:
+                if today >= self.tanggal_mulai_penilaian_mandiri_penilaian_auditor:
+                    self.status = 'PENILAIAN_AUDITOR'  # Perbaiki typo juga di sini
+                    self.save(update_fields=['status'])
+                    return
+
+        # Penilaian Auditor → Selesai
+        if self.status == 'PENILAIAN_AUDITOR' and self.tanggal_selesai_penilaian_auditor:
+            if today > self.tanggal_selesai_penilaian_auditor:
+                self.status = 'SELESAI'
+                self.save(update_fields=['status'])
+                return
+
     class Meta:
         verbose_name = "Sesi Audit"
         verbose_name_plural = "Sesi Audit"
         unique_together = ['program_studi', 'tahun_akademik', 'semester']
-        ordering = ['-tanggal_mulai']
+        ordering = ['-tanggal_mulai_penilaian_mandiri']
     
     def __str__(self):
         return f"{self.program_studi} - {self.tahun_akademik} {self.semester}"

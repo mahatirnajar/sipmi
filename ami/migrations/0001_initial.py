@@ -99,7 +99,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('tahun_akademik', models.CharField(max_length=9)),
                 ('semester', models.CharField(choices=[('G', 'Ganjil'), ('P', 'Genap')], max_length=2)),
-                ('tanggal_mulai', models.DateField()),
+                ('tanggal_mulai_penilaian_mandiri', models.DateField()),
                 ('tanggal_selesai', models.DateField(blank=True, null=True)),
                 ('status', models.CharField(choices=[('DRAFT', 'Draft'), ('DIAJUKAN', 'Diajukan'), ('DISETUJUI', 'Disetujui'), ('DITOLAK', 'Ditolak')], default='DRAFT', max_length=20)),
                 ('auditor_anggota', models.ManyToManyField(blank=True, related_name='anggota_audit_sessions', to='ami.auditor')),
@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Sesi Audit',
                 'verbose_name_plural': 'Sesi Audit',
-                'ordering': ['-tanggal_mulai'],
+                'ordering': ['-tanggal_mulai_penilaian_mandiri'],
             },
         ),
         migrations.CreateModel(

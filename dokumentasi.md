@@ -99,7 +99,7 @@ ami/
 - `program_studi` (ForeignKey): Program studi yang diaudit
 - `tahun_akademik` (CharField): Tahun akademik (contoh: 2023/2024)
 - `semester` (CharField): Semester (1 atau 2)
-- `tanggal_mulai` (DateField): Tanggal mulai audit
+- `tanggal_mulai_penilaian_mandiri` (DateField): Tanggal mulai audit
 - `tanggal_selesai` (DateField): Tanggal selesai audit
 - `status` (CharField): Status sesi audit (diusulkan, berlangsung, selesai)
 - `auditor_ketua` (ForeignKey): Auditor ketua

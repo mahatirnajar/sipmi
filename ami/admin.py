@@ -155,13 +155,13 @@ class AuditorAdmin(admin.ModelAdmin):
 # ----------------------------
 @admin.register(AuditSession)
 class AuditSessionAdmin(admin.ModelAdmin):
-    list_display = ('program_studi', 'tahun_akademik', 'semester', 'tanggal_mulai', 'status', 'auditor_ketua')
+    list_display = ('program_studi', 'tahun_akademik', 'semester', 'tanggal_mulai_penilaian_mandiri', 'status', 'auditor_ketua')
     search_fields = ('program_studi__nama', 'tahun_akademik', 'auditor_ketua__nama_lengkap')
     list_filter = ('tahun_akademik', 'semester', 'status', 'program_studi__lembaga_akreditasi')
-    ordering = ['-tanggal_mulai']
+    ordering = ['-tanggal_mulai_penilaian_mandiri']
     raw_id_fields = ('program_studi', 'auditor_ketua')
     filter_horizontal = ('auditor_anggota',)
-    date_hierarchy = 'tanggal_mulai'
+    date_hierarchy = 'tanggal_mulai_penilaian_mandiri'
     list_select_related = ('program_studi', 'auditor_ketua')
     
     def get_queryset(self, request):

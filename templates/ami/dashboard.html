@@ -101,7 +101,7 @@
                                     Audit {{ session.program_studi.nama }} {% if session.status == 'selesai' %}selesai{% else %}dijadwalkan{% endif %}
                                 </p>
                                 <p class="text-xs text-gray-500">
-                                    {{ session.tanggal_mulai|timesince }} yang lalu
+                                    {{ session.tanggal_mulai_penilaian_mandiri|timesince }} yang lalu
                                 </p>
                             </div>
                         </div>

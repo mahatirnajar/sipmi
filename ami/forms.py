@@ -231,13 +231,14 @@ class AuditorForm(forms.ModelForm):
 class AuditSessionForm(forms.ModelForm):
     class Meta:
         model = AuditSession
-        fields = ['program_studi', 'tahun_akademik', 'semester', 'tanggal_mulai', 'tanggal_selesai', 'status', 'auditor_ketua', 'auditor_anggota']
+        fields = ['program_studi', 'tahun_akademik', 'semester', 'tanggal_mulai_penilaian_mandiri', 'tanggal_selesai_penilaian_mandiri','tanggal_selesai_penilian_auditor', 'status', 'auditor_ketua', 'auditor_anggota']
         widgets = {
             'program_studi': forms.Select(attrs={'class': 'form-control'}),
             'tahun_akademik': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 2023/2024'}),
             'semester': forms.Select(attrs={'class': 'form-control'}),
-            'tanggal_mulai': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'tanggal_selesai': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'tanggal_mulai_penilaian_mandiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'tanggal_selesai_penilaian_mandiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'tanggal_selesai_penilian_auditor': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'auditor_ketua': forms.Select(attrs={'class': 'form-control'}),
             'auditor_anggota': forms.SelectMultiple(attrs={'class': 'form-control'}),
@@ -253,6 +254,19 @@ class PenilaianDiriForm(forms.ModelForm):
             'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    # def clean_skor(self):
+    #     skor = self.cleaned_data.get('skor')
+    #     indikator = self.cleaned_data.get('indikator')
+        
+    #     if skor is not None and indikator:
+    #         if skor < 0:
+    #             raise forms.ValidationError("Skor tidak boleh kurang dari 0.")
+    #         if skor > indikator.skor_maksimal:
+    #             raise forms.ValidationError(
+    #                 f"Skor tidak boleh melebihi {indikator.skor_maksimal} (skor maksimal untuk indikator ini)."
+    #             )
+    #     return skor
 
 class AuditForm(forms.ModelForm):
     class Meta:

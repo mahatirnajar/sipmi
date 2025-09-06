@@ -129,3 +129,25 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# settings.py
+
+# --- Celery Settings ---
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# Opsional: konfigurasi lain
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Jakarta'  # Sesuaikan zona waktu Anda
+
+# Untuk Celery Beat (scheduler)
+CELERY_BEAT_SCHEDULE = {
+    'update-audit-sessions-daily': {
+        'task': 'ami.tasks.update_audit_sessions_status',
+        'schedule': 60 * 60 * 24,  # Setiap 24 jam (dalam detik)
+        # ATAU pakai crontab (butuh import):
+        # 'schedule': crontab(hour=0, minute=5),
+    },
+}
