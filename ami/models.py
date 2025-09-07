@@ -74,21 +74,7 @@ class IndikatorPenilaian(models.Model):
         unique_together = ['elemen', 'kode']
         ordering = ['kode']
     
-    def clean(self):
-        super().clean()
-        if self.skor is not None:
-            if self.skor < 0:
-                raise ValidationError({'skor': 'Skor tidak boleh kurang dari 0.'})
-            if self.indikator and self.skor > self.indikator.skor_maksimal:
-                raise ValidationError({
-                    'skor': f'Skor tidak boleh melebihi {self.indikator.skor_maksimal} (skor maksimal untuk indikator ini).'
-                })
-
-    def save(self, *args, **kwargs):
-        self.full_clean()  # memastikan validasi dijalankan sebelum save
-        super().save(*args, **kwargs)
-
-    
+       
     def __str__(self):
         return f"{self.kode} - {self.deskripsi[:50]}..."
 
@@ -104,6 +90,20 @@ class SkorIndikator(models.Model):
         unique_together = ['indikator', 'skor']
         ordering = ['-skor']
     
+    def clean(self):
+        super().clean()
+        if self.skor is not None:
+            if self.skor < 0:
+                raise ValidationError({'skor': 'Skor tidak boleh kurang dari 0.'})
+            if self.indikator and self.skor > self.indikator.skor_maksimal:
+                raise ValidationError({
+                    'skor': f'Skor tidak boleh melebihi {self.indikator.skor_maksimal} (skor maksimal untuk indikator ini).'
+                })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # memastikan validasi dijalankan sebelum save
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"Skor {self.skor}: {self.deskripsi[:50]}..."
 
@@ -183,8 +183,8 @@ class AuditSession(models.Model):
     tanggal_selesai_penilian_auditor = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('DRAFT', 'Draft'),
-        ('PENIALAIN_MANDIRI', 'Penilaian Mandiri'),
-        ('PENIALAIN_AUDITOR', 'Penilaian Auditor'),
+        ('PENIALAIN MANDIRI', 'Penilaian Mandiri'),
+        ('PENIALAIN AUDITOR', 'Penilaian Auditor'),
         ('SELESAI', 'SELESAI'),
     ], default='DRAFT')
     auditor_ketua = models.ForeignKey(Auditor, on_delete=models.SET_NULL, null=True, blank=True, related_name='ketua_audit_sessions')
