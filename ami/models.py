@@ -32,6 +32,11 @@ class Kriteria(models.Model):
     kode = models.CharField(max_length=30)
     nama = models.CharField(max_length=255)
     deskripsi = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=[
+        ('aktif', 'aktif'),
+        ('tidak aktif', 'tidak aktif'),
+    ], default='aktif')
+    
     
     class Meta:
         verbose_name = "Kriteria"
@@ -48,7 +53,12 @@ class Elemen(models.Model):
     kode = models.CharField(max_length=30)
     nama = models.CharField(max_length=255)
     deskripsi = models.TextField(blank=True, null=True)
-    
+    panduan = models.TextField(blank=True, null=True)
+    skor_maksimal = models.FloatField(default=4.0)
+    status = models.CharField(max_length=20, choices=[
+        ('aktif', 'aktif'),
+        ('tidak aktif', 'tidak aktif'),
+    ], default='aktif')
     class Meta:
         verbose_name = "Elemen"
         verbose_name_plural = "Elemen"
@@ -57,55 +67,6 @@ class Elemen(models.Model):
     
     def __str__(self):
         return f"{self.kode} - {self.nama}"
-
-class IndikatorPenilaian(models.Model):
-    """Model untuk indikator penilaian (bagian dari elemen)"""
-    elemen = models.ForeignKey(Elemen, on_delete=models.CASCADE, related_name='indikator')
-    kode = models.CharField(max_length=30)
-    deskripsi = models.TextField()
-    panduan = models.TextField(blank=True, null=True)
-    skor_maksimal = models.FloatField(default=4.0)
-    memiliki_perhitungan_khusus = models.BooleanField(default=False)
-    rumus_perhitungan = models.TextField(blank=True, null=True)
-    
-    class Meta:
-        verbose_name = "Indikator Penilaian"
-        verbose_name_plural = "Indikator Penilaian"
-        unique_together = ['elemen', 'kode']
-        ordering = ['kode']
-    
-       
-    def __str__(self):
-        return f"{self.kode} - {self.deskripsi[:50]}..."
-
-class SkorIndikator(models.Model):
-    """Model untuk deskripsi skor pada setiap indikator"""
-    indikator = models.ForeignKey(IndikatorPenilaian, on_delete=models.CASCADE, related_name='skor_indikator')
-    skor = models.FloatField()
-    deskripsi = models.TextField()
-    
-    class Meta:
-        verbose_name = "Deskripsi Skor"
-        verbose_name_plural = "Deskripsi Skor"
-        unique_together = ['indikator', 'skor']
-        ordering = ['-skor']
-    
-    def clean(self):
-        super().clean()
-        if self.skor is not None:
-            if self.skor < 0:
-                raise ValidationError({'skor': 'Skor tidak boleh kurang dari 0.'})
-            if self.indikator and self.skor > self.indikator.skor_maksimal:
-                raise ValidationError({
-                    'skor': f'Skor tidak boleh melebihi {self.indikator.skor_maksimal} (skor maksimal untuk indikator ini).'
-                })
-
-    def save(self, *args, **kwargs):
-        self.full_clean()  # memastikan validasi dijalankan sebelum save
-        super().save(*args, **kwargs)
-        
-    def __str__(self):
-        return f"Skor {self.skor}: {self.deskripsi[:50]}..."
 
 class ProgramStudi(models.Model):
     """Model untuk program studi yang diaudit"""
@@ -231,9 +192,9 @@ class AuditSession(models.Model):
 class PenilaianDiri(models.Model):
     """Model untuk penilaian diri yang dilakukan oleh program studi"""
     audit_session = models.ForeignKey(AuditSession, on_delete=models.CASCADE, related_name='penilaian_diri')
-    indikator = models.ForeignKey(IndikatorPenilaian, on_delete=models.CASCADE)
+    elemen = models.ForeignKey(Elemen, on_delete=models.CASCADE)
     skor = models.FloatField(null=True, blank=True)
-    bukti_dokumen = models.FileField(upload_to='dokumen_pendukung/', blank=True, null=True)
+    bukti_dokumen = models.URLField(blank=True, null=True)
     komentar = models.TextField(blank=True, null=True)
     tanggal_penilaian = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[
@@ -247,6 +208,20 @@ class PenilaianDiri(models.Model):
         verbose_name_plural = "Penilaian Diri"
         unique_together = ['audit_session', 'indikator']
         ordering = ['indikator__kode']
+    
+    def clean(self):
+        super().clean()
+        if self.skor is not None:
+            if self.skor < 0:
+                raise ValidationError({'skor': 'Skor tidak boleh kurang dari 0.'})
+            if self.indikator and self.skor > self.indikator.skor_maksimal:
+                raise ValidationError({
+                    'skor': f'Skor tidak boleh melebihi {self.indikator.skor_maksimal} (skor maksimal untuk indikator ini).'
+                })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # memastikan validasi dijalankan sebelum save
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.indikator.kode} - {self.audit_session.program_studi}"
