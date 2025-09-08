@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Form koordinator program studi{% endblock %}
+{% block mobile_title %}Form Koordinator{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+        </div>
+        <form method="post" class="p-4 lg:p-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.nuptk.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">NUPTK</label>
+                    {{ form.nuptk }}
+                    {% if form.nuptk.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.nuptk.errors }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">NUPTK akan digunakan sebagai username dan password default</p>
+                </div>
+                <div>
+                    <label for="{{ form.nama_lengkap.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    {{ form.nama_lengkap }}
+                    {% if form.nama_lengkap.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.nama_lengkap.errors }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.program_studi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Program Studi</label>
+                    {{ form.program_studi }}
+                    {% if form.program_studi.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.program_studi.errors }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-6 flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                <a href="{% url 'ami:koordinator_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                    Batal
+                </a>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

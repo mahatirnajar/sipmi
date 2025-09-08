@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hapus Koordinator - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}Hapus Koordinator{% endblock %}
+{% block page_subtitle %}Konfirmasi penghapusan koordinator program studi{% endblock %}
+{% block mobile_title %}Hapus Koordinator{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Konfirmasi Penghapusan</h3>
+        </div>
+        <div class="p-4 lg:p-6">
+            <p class="text-gray-700 mb-4">Apakah Anda yakin ingin menghapus koordinator berikut?</p>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <p class="font-medium text-gray-900">{{ koordinator.nama_lengkap }}</p>
+                <p class="text-sm text-gray-600">NUPTK: {{ koordinator.nuptk }}</p>
+                <p class="text-sm text-gray-600">Program Studi: {{ koordinator.program_studi.kode }} - {{ koordinator.program_studi.nama }}</p>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">Penghapusan ini akan menghapus data koordinator dan akun pengguna terkait.</p>
+        </div>
+        <div class="px-4 lg:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+            <a href="{% url 'ami:koordinator_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                Batal
+            </a>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Hapus
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

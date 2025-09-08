@@ -113,10 +113,28 @@ class ProgramStudi(models.Model):
     def __str__(self):
         return f"{self.kode} - {self.nama} ({self.jenjang})"
 
+class KoordinatorProgramStudi(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    nuptk = models.CharField(max_length=20, unique=True)
+    nama_lengkap = models.CharField(max_length=255)
+    program_studi = models.ForeignKey(
+        ProgramStudi, 
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='koordinators'
+    )
+    
+    class Meta:
+        verbose_name = "Koordinator Program Studi"
+        verbose_name_plural = "Koordinator Program Studi"
+        ordering = ['nama_lengkap']
+    
+    def __str__(self):
+        return f"{self.nama_lengkap} ({self.nuptk})"
 class Auditor(models.Model):
     """Model untuk auditor"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    nip = models.CharField(max_length=20, unique=True)
+    nuptk = models.CharField(max_length=20, unique=True)
     nama_lengkap = models.CharField(max_length=255)
     jabatan = models.CharField(max_length=255)
     unit_kerja = models.CharField(max_length=255)
@@ -192,7 +210,7 @@ class AuditSession(models.Model):
 class PenilaianDiri(models.Model):
     """Model untuk penilaian diri yang dilakukan oleh program studi"""
     audit_session = models.ForeignKey(AuditSession, on_delete=models.CASCADE, related_name='penilaian_diri')
-    elemen = models.ForeignKey(Elemen, on_delete=models.CASCADE)
+    elemen = models.ForeignKey(Elemen, on_delete=models.CASCADE, null=True)
     skor = models.FloatField(null=True, blank=True)
     bukti_dokumen = models.URLField(blank=True, null=True)
     komentar = models.TextField(blank=True, null=True)
@@ -206,17 +224,17 @@ class PenilaianDiri(models.Model):
     class Meta:
         verbose_name = "Penilaian Diri"
         verbose_name_plural = "Penilaian Diri"
-        unique_together = ['audit_session', 'indikator']
-        ordering = ['indikator__kode']
+        unique_together = ['audit_session', 'elemen']
+        ordering = ['elemen__kode']
     
     def clean(self):
         super().clean()
         if self.skor is not None:
             if self.skor < 0:
                 raise ValidationError({'skor': 'Skor tidak boleh kurang dari 0.'})
-            if self.indikator and self.skor > self.indikator.skor_maksimal:
+            if self.elemen and self.skor > self.elemen.skor_maksimal:
                 raise ValidationError({
-                    'skor': f'Skor tidak boleh melebihi {self.indikator.skor_maksimal} (skor maksimal untuk indikator ini).'
+                    'skor': f'Skor tidak boleh melebihi {self.elemen.skor_maksimal} (skor maksimal untuk indikator ini).'
                 })
 
     def save(self, *args, **kwargs):
@@ -224,7 +242,7 @@ class PenilaianDiri(models.Model):
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"{self.indikator.kode} - {self.audit_session.program_studi}"
+        return f"{self.elemen.kode} - {self.audit_session.program_studi}"
 
 class Audit(models.Model):
     """Model untuk hasil audit yang dilakukan oleh auditor"""
@@ -239,10 +257,10 @@ class Audit(models.Model):
     class Meta:
         verbose_name = "Audit"
         verbose_name_plural = "Audit"
-        ordering = ['penilaian_diri__indikator__kode']
+        ordering = ['penilaian_diri__elemen__kode']
     
     def __str__(self):
-        return f"Audit {self.penilaian_diri.indikator.kode} - {self.penilaian_diri.audit_session.program_studi}"
+        return f"Audit {self.penilaian_diri.elemen.kode} - {self.penilaian_diri.audit_session.program_studi}"
 
 class DokumenPendukung(models.Model):
     """Model untuk dokumen pendukung tambahan"""
@@ -258,7 +276,7 @@ class DokumenPendukung(models.Model):
         ordering = ['-tanggal_upload']
     
     def __str__(self):
-        return f"{self.nama} - {self.penilaian_diri.indikator.kode}"
+        return f"{self.nama} - {self.penilaian_diri.elemen.kode}"
 
 class CatatanAudit(models.Model):
     """Model untuk catatan atau komentar selama proses audit"""
@@ -299,4 +317,4 @@ class RekomendasiTindakLanjut(models.Model):
         ordering = ['-tenggat_waktu']
     
     def __str__(self):
-        return f"Rekomendasi untuk {self.audit.penilaian_diri.indikator.kode}"
+        return f"Rekomendasi untuk {self.audit.penilaian_diri.elemen.kode}"

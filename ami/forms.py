@@ -1,5 +1,6 @@
 # ami/forms.py
 from django import forms
+from django.contrib.auth.models import User
 from .models import (
     LembagaAkreditasi,
     ProgramStudi,
@@ -11,8 +12,7 @@ from .models import (
     RekomendasiTindakLanjut,
     Kriteria,
     Elemen,
-    IndikatorPenilaian,
-    SkorIndikator,
+    KoordinatorProgramStudi,
     KategoriKondisi,
 )
 
@@ -112,121 +112,50 @@ class ElemenForm(forms.ModelForm):
         self.fields['kode'].required = True
         self.fields['nama'].required = True
 
-class IndikatorPenilaianForm(forms.ModelForm):
-    """Form untuk model IndikatorPenilaian"""
+class KoordinatorProgramStudiForm(forms.ModelForm):
     class Meta:
-        model = IndikatorPenilaian
-        fields = [
-            'elemen', 'kode', 'deskripsi', 'panduan', 
-            'skor_maksimal', 'memiliki_perhitungan_khusus', 'rumus_perhitungan'
-        ]
+        model = KoordinatorProgramStudi
+        fields = ['nuptk', 'nama_lengkap', 'program_studi']
         widgets = {
-            'elemen': forms.Select(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            'nuptk': forms.TextInput(attrs={
+                'class': 'form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500',
+                'placeholder': 'Masukkan NUPTK'
             }),
-            'kode': forms.TextInput(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'placeholder': 'Contoh: IK1.1.1, IK1.1.2, dst'
+            'nama_lengkap': forms.TextInput(attrs={
+                'class': 'form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500',
+                'placeholder': 'Masukkan nama lengkap'
             }),
-            'deskripsi': forms.Textarea(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'rows': 4,
-                'placeholder': 'Deskripsi indikator penilaian'
+            'program_studi': forms.Select(attrs={
+                'class': 'form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
             }),
-            'panduan': forms.Textarea(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'rows': 3,
-                'placeholder': 'Panduan untuk penilaian indikator ini'
-            }),
-            'skor_maksimal': forms.NumberInput(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'step': '0.1',
-                'min': '0'
-            }),
-            'memiliki_perhitungan_khusus': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-            }),
-            'rumus_perhitungan': forms.Textarea(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'rows': 3,
-                'placeholder': 'Jika memiliki perhitungan khusus, masukkan rumusnya di sini'
-            })
         }
-    
-    def __init__(self, *args, **kwargs):
-        elemen_id = kwargs.pop('elemen_id', None)
-        super().__init__(*args, **kwargs)
-        # Filter elemen jika ada parameter elemen_id
-        if elemen_id:
-            self.fields['elemen'].queryset = Elemen.objects.filter(id=elemen_id)
-            self.fields['elemen'].widget.attrs['disabled'] = True
-        else:
-            self.fields['elemen'].empty_label = "Pilih Elemen"
-        # Tambahkan atribut required
-        self.fields['kode'].required = True
-        self.fields['deskripsi'].required = True
-        self.fields['skor_maksimal'].initial = 4.0
 
-class SkorIndikatorForm(forms.ModelForm):
-    """Form untuk model SkorIndikator"""
-    class Meta:
-        model = SkorIndikator
-        fields = ['indikator', 'skor', 'deskripsi']
-        widgets = {
-            'indikator': forms.Select(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'skor': forms.NumberInput(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'step': '0.1',
-                'min': '0'
-            }),
-            'deskripsi': forms.Textarea(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'rows': 4,
-                'placeholder': 'Deskripsi untuk skor ini'
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        indikator_id = kwargs.pop('indikator_id', None)
-        super().__init__(*args, **kwargs)
-        # Filter indikator jika ada parameter indikator_id
-        if indikator_id:
-            self.fields['indikator'].queryset = IndikatorPenilaian.objects.filter(id=indikator_id)
-            self.fields['indikator'].widget.attrs['disabled'] = True
-        else:
-            self.fields['indikator'].empty_label = "Pilih Indikator Penilaian"
-        # Tambahkan atribut required
-        self.fields['skor'].required = True
-        self.fields['deskripsi'].required = True
-    
-    def clean_skor(self):
-        """Validasi skor harus sesuai dengan skor maksimal indikator"""
-        skor = self.cleaned_data.get('skor')
-        indikator = self.cleaned_data.get('indikator')
-        
-        if indikator and skor:
-            # Pastikan skor tidak melebihi skor maksimal indikator
-            if skor > indikator.skor_maksimal:
-                raise forms.ValidationError(
-                    f"Skor tidak boleh melebihi skor maksimal indikator ({indikator.skor_maksimal})"
-                )
-        return skor
-    
+    def clean_nuptk(self):
+        """Validasi NUPTK harus unik"""
+        nuptk = self.cleaned_data['nuptk']
+        if User.objects.filter(username=nuptk).exists():
+            raise forms.ValidationError("NUPTK Sudah Terdaftar.")
+        return nuptk
 class AuditorForm(forms.ModelForm):
     class Meta:
         model = Auditor
-        fields = ['user', 'nip', 'nama_lengkap', 'jabatan', 'unit_kerja', 'nomor_registrasi', 'is_auditor_ketua']
+        fields = ['nuptk', 'nama_lengkap', 'jabatan', 'unit_kerja', 'nomor_registrasi', 'is_auditor_ketua']
         widgets = {
-            'user': forms.Select(attrs={'class': 'form-control'}),
-            'nip': forms.TextInput(attrs={'class': 'form-control'}),
+            'nuptk': forms.TextInput(attrs={'class': 'form-control'}),
             'nama_lengkap': forms.TextInput(attrs={'class': 'form-control'}),
             'jabatan': forms.TextInput(attrs={'class': 'form-control'}),
             'unit_kerja': forms.TextInput(attrs={'class': 'form-control'}),
             'nomor_registrasi': forms.TextInput(attrs={'class': 'form-control'}),
             'is_auditor_ketua': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def clean_nuptk(self):
+        """Validasi NUPTK harus unik"""
+        nuptk = self.cleaned_data['nuptk']
+        if User.objects.filter(username=nuptk).exists():
+            raise forms.ValidationError("NUPTK Sudah Terdaftar.")
+        return nuptk
+
 
 class AuditSessionForm(forms.ModelForm):
     class Meta:
@@ -247,26 +176,26 @@ class AuditSessionForm(forms.ModelForm):
 class PenilaianDiriForm(forms.ModelForm):
     class Meta:
         model = PenilaianDiri
-        fields = ['indikator', 'skor', 'komentar', 'status']
+        fields = ['elemen', 'skor', 'komentar', 'status']
         widgets = {
-            'indikator': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'elemen': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'skor': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '4', 'step': '0.01'}),
             'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
 
-    # def clean_skor(self):
-    #     skor = self.cleaned_data.get('skor')
-    #     indikator = self.cleaned_data.get('indikator')
+    def clean_skor(self):
+        skor = self.cleaned_data.get('skor')
+        elemen = self.cleaned_data.get('elemen')
         
-    #     if skor is not None and indikator:
-    #         if skor < 0:
-    #             raise forms.ValidationError("Skor tidak boleh kurang dari 0.")
-    #         if skor > indikator.skor_maksimal:
-    #             raise forms.ValidationError(
-    #                 f"Skor tidak boleh melebihi {indikator.skor_maksimal} (skor maksimal untuk indikator ini)."
-    #             )
-    #     return skor
+        if skor is not None and elemen:
+            if skor < 0:
+                raise forms.ValidationError("Skor tidak boleh kurang dari 0.")
+            if skor > elemen.skor_maksimal:
+                raise forms.ValidationError(
+                    f"Skor tidak boleh melebihi {elemen.skor_maksimal} (skor maksimal untuk indikator ini)."
+                )
+        return skor
 
 class AuditForm(forms.ModelForm):
     class Meta:

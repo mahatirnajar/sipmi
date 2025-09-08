@@ -20,6 +20,13 @@ urlpatterns = [
     path('program-studi/<int:pk>/edit/', views.program_studi_update, name='program_studi_update'),
     path('program-studi/<int:pk>/delete/', views.program_studi_delete, name='program_studi_delete'),
 
+    #Koordinator Progam Studi
+    path('koordinator/', views.koordinator_list, name='koordinator_list'),
+    path('koordinator/create/', views.koordinator_create, name='koordinator_create'),
+    path('koordinator/<int:pk>/', views.koordinator_detail, name='koordinator_detail'),
+    path('koordinator/<int:pk>/update/', views.koordinator_update, name='koordinator_update'),
+    path('koordinator/<int:pk>/delete/', views.koordinator_delete, name='koordinator_delete'),
+
     # Kriteria URLs
     path('kriteria/', views.kriteria_list, name='kriteria_list'),
     path('kriteria/add/', views.kriteria_create, name='kriteria_create'),
@@ -35,21 +42,6 @@ urlpatterns = [
     path('elemen/<int:pk>/', views.elemen_detail, name='elemen_detail'),
     path('elemen/<int:pk>/delete/', views.elemen_delete, name='elemen_delete'),
     
-    # Indikator Penilaian URLs
-    path('elemen/<int:elemen_id>/indikator/', views.indikator_list, name='indikator_list'),
-    path('indikator/add/', views.indikator_create, name='indikator_create'),
-    path('elemen/<int:elemen_id>/indikator/add/', views.indikator_create, name='indikator_create_by_elemen'),
-    path('indikator/<int:pk>/edit/', views.indikator_update, name='indikator_update'),
-    path('indikator/<int:pk>/', views.indikator_detail, name='indikator_detail'),
-    path('indikator/<int:pk>/delete/', views.indikator_delete, name='indikator_delete'),
-    
-    # Skor Indikator URLs
-    path('indikator/<int:indikator_id>/skor/', views.skor_indikator_list, name='skor_indikator_list'),
-    path('skor/add/', views.skor_indikator_create, name='skor_indikator_create'),
-    path('indikator/<int:indikator_id>/skor/add/', views.skor_indikator_create, name='skor_indikator_create_by_indikator'),
-    path('skor/<int:pk>/edit/', views.skor_indikator_update, name='skor_indikator_update'),
-    path('skor/<int:pk>/delete/', views.skor_indikator_delete, name='skor_indikator_delete'),
-
     # Auditor
     path('auditor/', views.auditor_list, name='auditor_list'),
     path('auditor/create/', views.auditor_create, name='auditor_create'),

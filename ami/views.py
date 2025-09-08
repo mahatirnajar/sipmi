@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponseForbidden, Http404
 from django.core.paginator import Paginator
+from django.contrib.auth.models import User
 from .models import (
     LembagaAkreditasi,
     ProgramStudi,
@@ -16,8 +17,7 @@ from .models import (
     RekomendasiTindakLanjut,
     Kriteria,
     Elemen,
-    IndikatorPenilaian,
-    SkorIndikator
+    KoordinatorProgramStudi,
 )
 from .forms import (
     LembagaAkreditasiForm,
@@ -30,8 +30,7 @@ from .forms import (
     RekomendasiTindakLanjutForm,
     KriteriaForm,
     ElemenForm,
-    IndikatorPenilaianForm,
-    SkorIndikatorForm
+    KoordinatorProgramStudiForm,
 )
 # ----------------------------
 # Helper Functions
@@ -88,40 +87,40 @@ def dashboard(request):
     # Ambil beberapa data terbaru
     latest_audit_sessions = AuditSession.objects.select_related('program_studi').order_by('-tanggal_mulai_penilaian_mandiri')[:5]
     latest_penilaian_diri = PenilaianDiri.objects.select_related(
-        'audit_session', 'audit_session__program_studi', 'indikator'
+        'audit_session', 'audit_session__program_studi', 'elemen'
     ).order_by('-tanggal_penilaian')[:5]
     
-    # Data untuk grafik
-    kriteria_data = []
-    if latest_audit_sessions:
-        # Ambil sesi audit terbaru untuk data grafik
-        latest_session = latest_audit_sessions[0]
-        kriteria_list = latest_session.program_studi.lembaga_akreditasi.kriteria.all()
+    # # Data untuk grafik
+    # kriteria_data = []
+    # if latest_audit_sessions:
+    #     # Ambil sesi audit terbaru untuk data grafik
+    #     latest_session = latest_audit_sessions[0]
+    #     kriteria_list = latest_session.program_studi.lembaga_akreditasi.kriteria.all()
         
-        for kriteria in kriteria_list:
-            # Hitung rata-rata skor untuk kriteria ini
-            total_skor = 0
-            count = 0
+    #     for kriteria in kriteria_list:
+    #         # Hitung rata-rata skor untuk kriteria ini
+    #         total_skor = 0
+    #         count = 0
             
-            for elemen in kriteria.elemen.all():
-                for indikator in elemen.indikator.all():
-                    try:
-                        penilaian = PenilaianDiri.objects.get(
-                            audit_session=latest_session,
-                            indikator=indikator
-                        )
-                        if penilaian.skor is not None:
-                            total_skor += penilaian.skor
-                            count += 1
-                    except PenilaianDiri.DoesNotExist:
-                        pass
+    #         for elemen in kriteria.elemen.all():
+    #             for indikator in elemen.indikator.all():
+    #                 try:
+    #                     penilaian = PenilaianDiri.objects.get(
+    #                         audit_session=latest_session,
+    #                         indikator=indikator
+    #                     )
+    #                     if penilaian.skor is not None:
+    #                         total_skor += penilaian.skor
+    #                         count += 1
+    #                 except PenilaianDiri.DoesNotExist:
+    #                     pass
             
-            if count > 0:
-                rata_rata = total_skor / count
-                kriteria_data.append({
-                    'nama': kriteria.nama,
-                    'rata_rata': round(rata_rata, 2)
-                })
+    #         if count > 0:
+    #             rata_rata = total_skor / count
+    #             kriteria_data.append({
+    #                 'nama': kriteria.nama,
+    #                 'rata_rata': round(rata_rata, 2)
+    #             })
     
     context = {
         'total_program_studi': total_program_studi,
@@ -130,7 +129,7 @@ def dashboard(request):
         'total_audit': total_audit,
         'latest_audit_sessions': latest_audit_sessions,
         'latest_penilaian_diri': latest_penilaian_diri,
-        'kriteria_data': kriteria_data,
+        # 'kriteria_data': kriteria_data,
     }
     
     return render(request, 'ami/dashboard.html', context)
@@ -285,6 +284,109 @@ def program_studi_delete(request, pk):
     })
 
 # ----------------------------
+# Views untuk Koordinator Program Studi
+# ----------------------------
+@login_required
+def koordinator_list(request):
+    """View untuk menampilkan daftar koordinator program studi"""
+    koordinators = KoordinatorProgramStudi.objects.select_related('user', 'program_studi').all().order_by('nama_lengkap')
+    # Pagination
+    paginator = Paginator(koordinators, 10)
+    page_number = request.GET.get('page')
+    koordinator_list = paginator.get_page(page_number)
+    return render(request, 'ami/koordinator_list.html', {
+        'koordinator_list': koordinator_list
+    })
+
+@login_required
+def koordinator_create(request):
+    """View untuk membuat koordinator program studi baru"""
+    if request.method == 'POST':
+        form = KoordinatorProgramStudiForm(request.POST)
+        if form.is_valid():
+            nuptk = form.cleaned_data['nuptk']
+            nama_lengkap = form.cleaned_data['nama_lengkap']
+            program_studi = form.cleaned_data['program_studi']
+            
+            # Cek apakah NUPTK sudah ada sebagai username
+            if User.objects.filter(username=nuptk).exists():
+                form.add_error('nuptk', 'NUPTK sudah digunakan')
+            else:
+                # Buat user dengan username dan password = nuptk
+                user = User.objects.create_user(
+                    username=nuptk,
+                    password=nuptk  # Django akan meng-hash password secara otomatis
+                )
+                
+                user.save()
+
+                # Buat koordinator program studi
+                koordinator = form.save(commit=False)
+                koordinator.user=user
+                koordinator.save()
+                
+                messages.success(request, f'Koordinator "{koordinator.nama_lengkap}" berhasil dibuat.')
+                return redirect('ami:koordinator_list')
+    else:
+        form = KoordinatorProgramStudiForm()
+    return render(request, 'ami/koordinator_form.html', {
+        'form': form,
+        'title': 'Tambah Koordinator Program Studi'
+    })
+
+@login_required
+def koordinator_detail(request, pk):
+    """View untuk detail koordinator program studi"""
+    koordinator = get_object_or_404(KoordinatorProgramStudi, pk=pk)
+    return render(request, 'ami/koordinator_detail.html', {
+        'koordinator': koordinator
+    })
+
+@login_required
+def koordinator_update(request, pk):
+    """View untuk memperbarui koordinator program studi"""
+    koordinator = get_object_or_404(KoordinatorProgramStudi, pk=pk)
+    if request.method == 'POST':
+        form = KoordinatorProgramStudiForm(request.POST, instance=koordinator)
+        if form.is_valid():
+            koordinator = form.save(commit=False)
+            
+            # Jika nuptk berubah, kita perlu memperbarui username user
+            if koordinator.nuptk != koordinator.user.username:
+                # Cek apakah NUPTK baru sudah ada sebagai username
+                if User.objects.filter(username=koordinator.nuptk).exists():
+                    form.add_error('nuptk', 'NUPTK sudah digunakan sebagai username')
+                else:
+                    koordinator.user.username = koordinator.nuptk
+                    koordinator.user.save()
+            
+            koordinator.save()
+            messages.success(request, f'Koordinator "{koordinator.nama_lengkap}" berhasil diperbarui.')
+            return redirect('ami:koordinator_list')
+    else:
+        form = KoordinatorProgramStudiForm(instance=koordinator)
+    return render(request, 'ami/koordinator_form.html', {
+        'form': form,
+        'title': f'Edit {koordinator.nama_lengkap}'
+    })
+
+@login_required
+def koordinator_delete(request, pk):
+    """View untuk menghapus koordinator program studi"""
+    koordinator = get_object_or_404(KoordinatorProgramStudi, pk=pk)
+    if request.method == 'POST':
+        nama = koordinator.nama_lengkap
+        # Hapus user terkait
+        user = koordinator.user
+        koordinator.delete()
+        user.delete()
+        messages.success(request, f'Koordinator "{nama}" berhasil dihapus.')
+        return redirect('ami:koordinator_list')
+    return render(request, 'ami/koordinator_confirm_delete.html', {
+        'koordinator': koordinator
+    })
+
+# ----------------------------
 # Views untuk Auditor
 # ----------------------------
 @login_required
@@ -307,7 +409,28 @@ def auditor_create(request):
     if request.method == 'POST':
         form = AuditorForm(request.POST)
         if form.is_valid():
-            auditor = form.save()
+             # Ambil data dari form
+            nuptk = form.cleaned_data['nuptk']
+            nama_lengkap = form.cleaned_data['nama_lengkap']
+            
+            # Pisahkan nama menjadi first_name dan last_name
+            name_parts = nama_lengkap.split()
+            first_name = name_parts[0] if name_parts else ''
+            last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+            
+            # Buat user baru
+            user = User.objects.create_user(
+                username=nuptk,
+                first_name=first_name,
+                last_name=last_name,
+                password='abcde'  # Password acak
+            )
+            user.save()
+
+            auditor = form.save(commit=False)
+            auditor.user=user
+            auditor.save()
+
             messages.success(request, f'Auditor "{auditor.nama_lengkap}" berhasil dibuat.')
             return redirect('ami:auditor_list')
     else:
@@ -1006,199 +1129,4 @@ def elemen_delete(request, pk):
     
     return render(request, 'ami/elemen_confirm_delete.html', {
         'elemen': elemen
-    })
-
-# ----------------------------
-# Views untuk Indikator Penilaian
-# ----------------------------
-@login_required
-def indikator_list(request, elemen_id=None):
-    """View untuk menampilkan daftar indikator berdasarkan elemen"""
-    elemen = None
-    if elemen_id:
-        elemen = get_object_or_404(Elemen, pk=elemen_id)
-        indikator_list = IndikatorPenilaian.objects.filter(elemen=elemen).order_by('kode')
-    else:
-        indikator_list = IndikatorPenilaian.objects.all().order_by('kode')
-    
-    # Pagination
-    paginator = Paginator(indikator_list, 10)
-    page_number = request.GET.get('page')
-    indikator = paginator.get_page(page_number)
-    
-    return render(request, 'ami/indikator_list.html', {
-        'indikator': indikator,
-        'elemen': elemen
-    })
-
-@login_required
-def indikator_create(request, elemen_id=None):
-    """View untuk membuat indikator penilaian baru"""
-    # Hanya staff yang bisa mengelola indikator
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
-        
-    elemen = None
-    if elemen_id:
-        elemen = get_object_or_404(Elemen, pk=elemen_id)
-    
-    if request.method == 'POST':
-        form = IndikatorPenilaianForm(request.POST)
-        if form.is_valid():
-            indikator = form.save()
-            messages.success(request, f'Indikator "{indikator.kode}" berhasil dibuat.')
-            return redirect('ami:indikator_list', elemen_id=elemen_id)
-    else:
-        initial = {'elemen': elemen} if elemen else {}
-        form = IndikatorPenilaianForm(initial=initial)
-    
-    return render(request, 'ami/indikator_form.html', {
-        'form': form,
-        'title': 'Tambah Indikator Penilaian',
-        'elemen': elemen
-    })
-
-@login_required
-def indikator_update(request, pk):
-    """View untuk memperbarui indikator penilaian"""
-    # Hanya staff yang bisa mengelola indikator
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
-        
-    indikator = get_object_or_404(IndikatorPenilaian, pk=pk)
-    if request.method == 'POST':
-        form = IndikatorPenilaianForm(request.POST, instance=indikator)
-        if form.is_valid():
-            indikator = form.save()
-            messages.success(request, f'Indikator "{indikator.kode}" berhasil diperbarui.')
-            return redirect('ami:indikator_list', elemen_id=indikator.elemen.id)
-    else:
-        form = IndikatorPenilaianForm(instance=indikator)
-    
-    return render(request, 'ami/indikator_form.html', {
-        'form': form,
-        'title': f'Edit {indikator.kode}',
-        'elemen': indikator.elemen
-    })
-
-@login_required
-def indikator_detail(request, pk):
-    """View untuk detail indikator penilaian"""
-    indikator = get_object_or_404(IndikatorPenilaian, pk=pk)
-    skor_indikator_list = indikator.skor_indikator.all().order_by('-skor')
-    
-    return render(request, 'ami/indikator_detail.html', {
-        'indikator': indikator,
-        'skor_indikator_list': skor_indikator_list
-    })
-
-@login_required
-def indikator_delete(request, pk):
-    """View untuk menghapus indikator penilaian"""
-    # Hanya staff yang bisa mengelola indikator
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
-        
-    indikator = get_object_or_404(IndikatorPenilaian, pk=pk)
-    if request.method == 'POST':
-        kode = indikator.kode
-        elemen_id = indikator.elemen.id
-        indikator.delete()
-        messages.success(request, f'Indikator "{kode}" berhasil dihapus.')
-        return redirect('ami:indikator_list', elemen_id=elemen_id)
-    
-    return render(request, 'ami/indikator_confirm_delete.html', {
-        'indikator': indikator
-    })
-
-# ----------------------------
-# Views untuk Skor Indikator
-# ----------------------------
-@login_required
-def skor_indikator_list(request, indikator_id=None):
-    """View untuk menampilkan daftar skor indikator berdasarkan indikator penilaian"""
-    indikator = None
-    if indikator_id:
-        indikator = get_object_or_404(IndikatorPenilaian, pk=indikator_id)
-        skor_list = SkorIndikator.objects.filter(indikator=indikator).order_by('-skor')
-    else:
-        skor_list = SkorIndikator.objects.all().order_by('-skor')
-    
-    # Pagination
-    paginator = Paginator(skor_list, 10)
-    page_number = request.GET.get('page')
-    skor_indikator = paginator.get_page(page_number)
-    
-    return render(request, 'ami/skor_indikator_list.html', {
-        'skor_indikator': skor_indikator,
-        'indikator': indikator
-    })
-
-@login_required
-def skor_indikator_create(request, indikator_id=None):
-    """View untuk membuat skor indikator baru"""
-    # Hanya staff yang bisa mengelola skor indikator
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
-        
-    indikator = None
-    if indikator_id:
-        indikator = get_object_or_404(IndikatorPenilaian, pk=indikator_id)
-    
-    if request.method == 'POST':
-        form = SkorIndikatorForm(request.POST)
-        if form.is_valid():
-            skor = form.save()
-            messages.success(request, f'Skor {skor.skor} untuk indikator "{indikator.kode}" berhasil dibuat.')
-            return redirect('ami:skor_indikator_list', indikator_id=indikator_id)
-    else:
-        initial = {'indikator': indikator} if indikator else {}
-        form = SkorIndikatorForm(initial=initial)
-    
-    return render(request, 'ami/skor_indikator_form.html', {
-        'form': form,
-        'title': 'Tambah Skor Indikator',
-        'indikator': indikator
-    })
-
-@login_required
-def skor_indikator_update(request, pk):
-    """View untuk memperbarui skor indikator"""
-    # Hanya staff yang bisa mengelola skor indikator
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
-        
-    skor = get_object_or_404(SkorIndikator, pk=pk)
-    if request.method == 'POST':
-        form = SkorIndikatorForm(request.POST, instance=skor)
-        if form.is_valid():
-            skor = form.save()
-            messages.success(request, f'Skor {skor.skor} untuk indikator "{skor.indikator.kode}" berhasil diperbarui.')
-            return redirect('ami:skor_indikator_list', indikator_id=skor.indikator.id)
-    else:
-        form = SkorIndikatorForm(instance=skor)
-    
-    return render(request, 'ami/skor_indikator_form.html', {
-        'form': form,
-        'title': f'Edit Skor {skor.skor}',
-        'indikator': skor.indikator
-    })
-
-@login_required
-def skor_indikator_delete(request, pk):
-    """View untuk menghapus skor indikator"""
-    # Hanya staff yang bisa mengelola skor indikator
-    if not request.user.is_staff:
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
-        
-    skor = get_object_or_404(SkorIndikator, pk=pk)
-    if request.method == 'POST':
-        skor_value = skor.skor
-        indikator_id = skor.indikator.id
-        skor.delete()
-        messages.success(request, f'Skor {skor_value} berhasil dihapus.')
-        return redirect('ami:skor_indikator_list', indikator_id=indikator_id)
-    
-    return render(request, 'ami/skor_indikator_confirm_delete.html', {
-        'skor': skor
     })
