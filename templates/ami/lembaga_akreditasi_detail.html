@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lembaga.nama }} - Lembaga Akreditasi | Sistem Audit Mutu Internal{% endblock %}
+{% block page_title %}Detail Lembaga Akreditasi{% endblock %}
+{% block page_subtitle %}{{ lembaga.nama }} ({{ lembaga.kode }}){% endblock %}
+{% block mobile_title %}Detail Lembaga{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6">
+    {% if messages %}
+    <div class="mb-4 lg:mb-6">
+        {% for message in messages %}
+        <div class="p-3 mb-3 text-sm rounded-lg {{ message.tags|default:'bg-blue-50 text-blue-800' }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Informasi Lembaga -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-start">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ lembaga.nama }}</h3>
+                    <p class="text-sm text-gray-600">Kode: <span class="font-medium text-gray-900">{{ lembaga.kode }}</span></p>
+                </div>
+                <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                    {% if user.is_staff %}
+                    <a href="{% url 'ami:lembaga_akreditasi_update' lembaga.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center">
+                        <i class="fas fa-edit mr-1.5"></i> Edit
+                    </a>
+                    <a href="{% url 'ami:lembaga_akreditasi_delete' lembaga.pk %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center">
+                        <i class="fas fa-trash-alt mr-1.5"></i> Hapus
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'ami:kriteria_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center">
+                        <i class="fas fa-plus mr-1.5"></i> Tambah Kriteria
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="px-4 lg:px-6 py-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Deskripsi</h4>
+                    <p class="text-gray-600">
+                        {% if lembaga.deskripsi %}
+                        {{ lembaga.deskripsi }}
+                        {% else %}
+                        <span class="text-gray-400">Tidak ada deskripsi</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Informasi Kontak</h4>
+                    <div class="space-y-2">
+                        {% if lembaga.website %}
+                        <div class="flex items-start">
+                            <i class="fas fa-globe text-gray-500 mt-1 mr-2 text-sm"></i>
+                            <div>
+                                <a href="{{ lembaga.website }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                    {{ lembaga.website }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if lembaga.kontak %}
+                        <div class="flex items-start">
+                            <i class="fas fa-envelope text-gray-500 mt-1 mr-2 text-sm"></i>
+                            <div>
+                                <p class="text-gray-600 whitespace-pre-line">{{ lembaga.kontak }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daftar Kriteria -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Daftar Kriteria</h3>
+        </div>
+        
+        {% if kriteria %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Kriteria</th>
+                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Status</th>
+                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for kriteria_item in kriteria %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
+                            <div class="text-xs lg:text-sm font-medium text-gray-900">{{ kriteria_item.kode }}</div>
+                        </td>
+                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
+                            <div class="text-xs lg:text-sm text-gray-900">{{ kriteria_item.nama }}</div>
+                        </td>
+                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm text-gray-500 hidden md:table-cell">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if kriteria_item.status == 'aktif' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ kriteria_item.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm font-medium">
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{% url 'ami:kriteria_detail' kriteria_item.pk %}" class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'ami:kriteria_update' kriteria_item.pk %}" class="text-yellow-500 hover:text-yellow-700">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'ami:kriteria_delete' kriteria_item.pk %}" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if kriteria.has_other_pages %}
+        <div class="px-4 lg:px-6 py-4 border-t border-gray-200">
+            <nav class="flex flex-col sm:flex-row sm:justify-between items-center">
+                <div class="mb-2 sm:mb-0 text-sm text-gray-700">
+                    Menampilkan {{ kriteria.start_index }} sampai {{ kriteria.end_index }} dari {{ kriteria.paginator.count }} kriteria
+                </div>
+                <ul class="inline-flex items-center -space-x-px">
+                    {% if kriteria.has_previous %}
+                    <li>
+                        <a href="?page=1" class="block py-1.5 px-2.5 ml-0 leading-tight text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700">
+                            <span class="sr-only">First</span>
+                            <i class="fas fa-angle-double-left text-xs"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?page={{ kriteria.previous_page_number }}" class="py-1.5 px-2.5 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">
+                            <span class="sr-only">Previous</span>
+                            <i class="fas fa-angle-left text-xs"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in kriteria.paginator.page_range %}
+                    {% if kriteria.number == i %}
+                    <li aria-current="page">
+                        <span class="py-1.5 px-2.5 text-blue-600 bg-blue-50 border border-gray-300 hover:bg-blue-100 hover:text-blue-700 text-xs">
+                            {{ i }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a href="?page={{ i }}" class="py-1.5 px-2.5 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 text-xs">
+                            {{ i }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if kriteria.has_next %}
+                    <li>
+                        <a href="?page={{ kriteria.next_page_number }}" class="py-1.5 px-2.5 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 text-xs">
+                            <span class="sr-only">Next</span>
+                            <i class="fas fa-angle-right text-xs"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?page={{ kriteria.paginator.num_pages }}" class="py-1.5 px-2.5 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 text-xs">
+                            <span class="sr-only">Last</span>
+                            <i class="fas fa-angle-double-right text-xs"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="px-4 lg:px-6 py-8 text-center">
+            <i class="fas fa-clipboard-list text-gray-400 text-3xl mb-3"></i>
+            <p class="text-gray-500">Belum ada kriteria yang terdaftar untuk lembaga ini.</p>
+            {% if user.is_staff %}
+            <a href="{% url 'ami:kriteria_create' %}" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i> Tambah Kriteria Pertama
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

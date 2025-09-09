@@ -43,18 +43,28 @@ class ProgramStudiForm(forms.ModelForm):
         }
 
 class KriteriaForm(forms.ModelForm):
-    """Form untuk model Kriteria"""
+    """Form untuk model Kriteria dengan kode yang dihasilkan berdasarkan lembaga"""
+    nomor = forms.CharField(
+        max_length=10,
+        required=True,
+        label='Nomor Kriteria',
+        widget=forms.TextInput(attrs={
+            'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+            'placeholder': 'Contoh: 1, 2, 3',
+            'autocomplete': 'off'
+        }),
+        help_text='Masukkan nomor urut kriteria (hanya angka atau format seperti "K1", "K2")'
+    )
+    
     class Meta:
         model = Kriteria
         fields = ['lembaga_akreditasi', 'kode', 'nama', 'deskripsi']
         widgets = {
             'lembaga_akreditasi': forms.Select(attrs={
-                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'kode': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'placeholder': 'Contoh: K1, K2, dst'
+                'id': 'id_lembaga_akreditasi'
             }),
+            'kode': forms.HiddenInput(),  # kode akan diisi otomatis
             'nama': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'placeholder': 'Nama kriteria'
@@ -68,12 +78,41 @@ class KriteriaForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Tambahkan placeholder untuk field yang membutuhkan
-        if 'lembaga_akreditasi' in self.fields:
-            self.fields['lembaga_akreditasi'].empty_label = "Pilih Lembaga Akreditasi"
-        # Tambahkan atribut required
-        self.fields['kode'].required = True
-        self.fields['nama'].required = True
+        
+        # Jika sedang mengedit, coba ekstrak nomor dari kode
+        if self.instance.pk and self.instance.kode:
+            # Pisahkan kode lembaga dari nomor kriteria
+            # Format asumsi: [kode_lembaga]-[nomor] atau [kode_lembaga][nomor]
+            lembaga_kode = self.instance.lembaga_akreditasi.kode if self.instance.lembaga_akreditasi else ""
+            
+            if self.instance.kode.startswith(lembaga_kode):
+                # Hapus prefiks lembaga dari kode
+                nomor_part = self.instance.kode[len(lembaga_kode):].lstrip('-')
+                self.fields['nomor'].initial = nomor_part
+            else:
+                self.fields['nomor'].initial = self.instance.kode
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        lembaga = cleaned_data.get('lembaga_akreditasi')
+        nomor = cleaned_data.get('nomor')
+        
+        if lembaga and nomor:
+            # Format kode: [kode_lembaga]-[nomor]
+            cleaned_data['kode'] = f"{lembaga.kode}-{nomor}"
+            
+            # Validasi keunikan kode
+            existing = Kriteria.objects.filter(
+                lembaga_akreditasi=lembaga,
+                kode=cleaned_data['kode']
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            
+            if existing.exists():
+                raise forms.ValidationError(
+                    f"Kode '{cleaned_data['kode']}' sudah digunakan untuk lembaga ini. Silakan pilih nomor lain."
+                )
+        
+        return cleaned_data
 
 class ElemenForm(forms.ModelForm):
     """Form untuk model Elemen"""

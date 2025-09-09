@@ -26,6 +26,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="{{ form.kode.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Kode Kriteria</label>
+                        <div class="flex items-center">
+                            <span id="prefiks-kode" class="bg-gray-100 border border-gray-300 rounded-l-lg px-3 py-2 text-gray-700">
+                                {% if form.lembaga_akreditasi.value %}
+                                    {% with lembaga=LembagaAkreditasi.objects.get(pk=form.lembaga_akreditasi.value) %}
+                                        {{ lembaga.kode }}-
+                                    {% endwith %}
+                                {% else %}
+                                    Pilih lembaga terlebih dahulu
+                                {% endif %}
+                            </span>
+                            {{ form.nomor }}
+                        </div>
+                        <p class="text-gray-500 text-xs mt-1">Contoh: Jika kode lembaga akreditasi adalah "BANPT", maka kode kriteria akan menjadi "BANPT-1"</p>
                         {{ form.kode }}
                         {% if form.kode.errors %}
                         <p class="mt-1 text-xs text-red-600">{{ form.kode.errors.0 }}</p>
@@ -69,4 +82,30 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const lembagaSelect = document.getElementById('id_lembaga_akreditasi');
+    const prefiksSpan = document.getElementById('prefiks-kode');
+    
+    if (lembagaSelect) {
+        lembagaSelect.addEventListener('change', function() {
+            if (this.value) {
+                // Lakukan request AJAX untuk mendapatkan kode lembaga
+                fetch(`/api/lembaga/${this.value}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        prefiksSpan.textContent = data.kode + '-';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        prefiksSpan.textContent = 'Error-';
+                    });
+            } else {
+                prefiksSpan.textContent = 'Pilih lembaga terlebih dahulu';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

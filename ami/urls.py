@@ -9,6 +9,7 @@ urlpatterns = [
 
     # Lembaga Akreditasi
     path('lembaga-akreditasi/', views.lembaga_akreditasi_list, name='lembaga_akreditasi_list'),
+    path('lembaga/<int:pk>/', views.lembaga_akreditasi_detail, name='lembaga_akreditasi_detail'),
     path('lembaga-akreditasi/create/', views.lembaga_akreditasi_create, name='lembaga_akreditasi_create'),
     path('lembaga-akreditasi/<int:pk>/edit/', views.lembaga_akreditasi_update, name='lembaga_akreditasi_update'),
     path('lembaga-akreditasi/<int:pk>/delete/', views.lembaga_akreditasi_delete, name='lembaga_akreditasi_delete'),
@@ -33,6 +34,7 @@ urlpatterns = [
     path('kriteria/<int:pk>/edit/', views.kriteria_update, name='kriteria_update'),
     path('kriteria/<int:pk>/', views.kriteria_detail, name='kriteria_detail'),
     path('kriteria/<int:pk>/delete/', views.kriteria_delete, name='kriteria_delete'),
+    path('api/lembaga/<int:pk>/', views.get_lembaga_kode, name='api_lembaga_kode'),
     
     # Elemen URLs
     path('kriteria/<int:kriteria_id>/elemen/', views.elemen_list, name='elemen_list'),

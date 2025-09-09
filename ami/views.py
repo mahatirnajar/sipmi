@@ -6,6 +6,8 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, Http404
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
+from django.http import JsonResponse
+
 from .models import (
     LembagaAkreditasi,
     ProgramStudi,
@@ -150,6 +152,23 @@ def lembaga_akreditasi_list(request):
     return render(request, 'ami/lembaga_akreditasi_list.html', {
         'lembaga_akreditasi': lembaga_akreditasi
     })
+
+@login_required
+def lembaga_akreditasi_detail(request, pk):
+    """View untuk detail lembaga akreditasi beserta kriterianya"""
+    lembaga = get_object_or_404(LembagaAkreditasi, pk=pk)
+    kriteria_list = lembaga.kriteria.all().order_by('kode')
+    
+    # Pagination
+    paginator = Paginator(kriteria_list, 10)
+    page_number = request.GET.get('page')
+    kriteria = paginator.get_page(page_number)
+    
+    return render(request, 'ami/lembaga_akreditasi_detail.html', {
+        'lembaga': lembaga,
+        'kriteria': kriteria
+    })
+
 
 @login_required
 def lembaga_akreditasi_create(request):
@@ -312,9 +331,16 @@ def koordinator_create(request):
             if User.objects.filter(username=nuptk).exists():
                 form.add_error('nuptk', 'NUPTK sudah digunakan')
             else:
+                 # Pisahkan nama menjadi first_name dan last_name
+                name_parts = nama_lengkap.split()
+                first_name = name_parts[0] if name_parts else ''
+                last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+
                 # Buat user dengan username dan password = nuptk
                 user = User.objects.create_user(
                     username=nuptk,
+                    first_name=first_name,
+                    last_name=last_name,
                     password=nuptk  # Django akan meng-hash password secara otomatis
                 )
                 
@@ -924,6 +950,17 @@ def laporan_audit(request, session_id):
 # ----------------------------
 # Views untuk Kriteria
 # ----------------------------
+
+@login_required
+def get_lembaga_kode(request, pk):
+    """API untuk mendapatkan kode lembaga berdasarkan ID"""
+    lembaga = get_object_or_404(LembagaAkreditasi, pk=pk)
+    return JsonResponse({
+        'id': lembaga.id,
+        'kode': lembaga.kode,
+        'nama': lembaga.nama
+    })
+
 @login_required
 def kriteria_list(request, lembaga_id=None):
     """View untuk menampilkan daftar kriteria berdasarkan lembaga akreditasi"""
