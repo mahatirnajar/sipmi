@@ -995,13 +995,13 @@ def kriteria_create(request, lembaga_id=None):
     lembaga = None
     if lembaga_id:
         lembaga = get_object_or_404(LembagaAkreditasi, pk=lembaga_id)
-    
+    print(lembaga)
     if request.method == 'POST':
         form = KriteriaForm(request.POST)
         if form.is_valid():
             kriteria = form.save()
             messages.success(request, f'Kriteria "{kriteria.nama}" berhasil dibuat.')
-            return redirect('ami:kriteria_list')
+            return redirect('ami:lembaga_akreditasi_detail', lembaga_id)
     else:
         initial = {'lembaga_akreditasi': lembaga} if lembaga else {}
         form = KriteriaForm(initial=initial)
@@ -1025,7 +1025,7 @@ def kriteria_update(request, pk):
         if form.is_valid():
             kriteria = form.save()
             messages.success(request, f'Kriteria "{kriteria.nama}" berhasil diperbarui.')
-            return redirect('ami:kriteria_list', lembaga_id=kriteria.lembaga_akreditasi.id)
+            return redirect('ami:lembaga_akreditasi_detail', kriteria.lembaga_akreditasi.id)
     else:
         form = KriteriaForm(instance=kriteria)
     
@@ -1059,7 +1059,7 @@ def kriteria_delete(request, pk):
         # lembaga_id = kriteria.lembaga_akreditasi.id
         kriteria.delete()
         messages.success(request, f'Kriteria "{nama}" berhasil dihapus.')
-        return redirect('ami:kriteria_list')
+        return redirect('ami:lembaga_akreditasi_detail', kriteria.lembaga_akreditasi.id)
     
     return render(request, 'ami/kriteria_confirm_delete.html', {
         'kriteria': kriteria

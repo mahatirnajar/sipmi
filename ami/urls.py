@@ -30,7 +30,7 @@ urlpatterns = [
 
     # Kriteria URLs
     path('kriteria/', views.kriteria_list, name='kriteria_list'),
-    path('kriteria/add/', views.kriteria_create, name='kriteria_create'),
+    path('kriteria/add/<int:lembaga_id>', views.kriteria_create, name='kriteria_create'),
     path('kriteria/<int:pk>/edit/', views.kriteria_update, name='kriteria_update'),
     path('kriteria/<int:pk>/', views.kriteria_detail, name='kriteria_detail'),
     path('kriteria/<int:pk>/delete/', views.kriteria_delete, name='kriteria_delete'),

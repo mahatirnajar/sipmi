@@ -29,7 +29,7 @@ class LembagaAkreditasi(models.Model):
 class Kriteria(models.Model):
     """Model untuk kriteria penilaian (level tertinggi)"""
     lembaga_akreditasi = models.ForeignKey(LembagaAkreditasi, on_delete=models.CASCADE, related_name='kriteria')
-    kode = models.CharField(max_length=30)
+    kode = models.CharField(max_length=30, null=True)
     nama = models.CharField(max_length=255)
     deskripsi = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[

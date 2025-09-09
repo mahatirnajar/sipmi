@@ -78,6 +78,8 @@ class KriteriaForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields['kode'].required = False
         
         # Jika sedang mengedit, coba ekstrak nomor dari kode
         if self.instance.pk and self.instance.kode:
@@ -89,28 +91,33 @@ class KriteriaForm(forms.ModelForm):
                 # Hapus prefiks lembaga dari kode
                 nomor_part = self.instance.kode[len(lembaga_kode):].lstrip('-')
                 self.fields['nomor'].initial = nomor_part
-            else:
-                self.fields['nomor'].initial = self.instance.kode
+            # else:
+            #     self.fields['nomor'].initial = self.instance.kode
     
     def clean(self):
         cleaned_data = super().clean()
         lembaga = cleaned_data.get('lembaga_akreditasi')
         nomor = cleaned_data.get('nomor')
         
-        if lembaga and nomor:
-            # Format kode: [kode_lembaga]-[nomor]
-            cleaned_data['kode'] = f"{lembaga.kode}-{nomor}"
-            
-            # Validasi keunikan kode
-            existing = Kriteria.objects.filter(
-                lembaga_akreditasi=lembaga,
-                kode=cleaned_data['kode']
-            ).exclude(pk=self.instance.pk if self.instance else None)
-            
-            if existing.exists():
-                raise forms.ValidationError(
-                    f"Kode '{cleaned_data['kode']}' sudah digunakan untuk lembaga ini. Silakan pilih nomor lain."
-                )
+        # Pastikan lembaga dan nomor ada
+        if not lembaga:
+            raise forms.ValidationError("Lembaga akreditasi harus dipilih.")
+        if not nomor:
+            raise forms.ValidationError("Nomor kriteria harus diisi.")
+        
+        # Generate kode
+        cleaned_data['kode'] = f"{lembaga.kode}-{nomor}"
+        
+        # Validasi keunikan
+        existing = Kriteria.objects.filter(
+            lembaga_akreditasi=lembaga,
+            kode=cleaned_data['kode']
+        ).exclude(pk=self.instance.pk if self.instance else None)
+        
+        if existing.exists():
+            raise forms.ValidationError(
+                f"Kode '{cleaned_data['kode']}' sudah digunakan untuk lembaga ini. Silakan pilih nomor lain."
+            )
         
         return cleaned_data
 

@@ -45,15 +45,10 @@
         <div class="px-4 lg:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
             <h3 class="text-lg font-semibold text-gray-900">Daftar Kriteria</h3>
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                {% if selected_lembaga %}
                 <a href="{% url 'ami:kriteria_create_by_lembaga' selected_lembaga.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center w-full sm:w-auto">
                     <i class="fas fa-plus mr-2"></i> Tambah Kriteria
                 </a>
-                {% else %}
-                <a href="{% url 'ami:kriteria_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center w-full sm:w-auto">
-                    <i class="fas fa-plus mr-2"></i> Tambah Kriteria
-                </a>
-                {% endif %}
+               
             </div>
         </div>
         <div class="overflow-x-auto">
