@@ -176,16 +176,16 @@ class KoordinatorProgramStudiForm(forms.ModelForm):
             }),
         }
 
-    def clean_nuptk(self):
-        """Validasi NUPTK harus unik"""
-        nuptk = self.cleaned_data['nuptk']
-        if User.objects.filter(username=nuptk).exists():
-            raise forms.ValidationError("NUPTK Sudah Terdaftar.")
-        return nuptk
+    # def clean_nuptk(self):
+    #     """Validasi NUPTK harus unik"""
+    #     nuptk = self.cleaned_data['nuptk']
+    #     if User.objects.filter(username=nuptk).exists():
+    #         raise forms.ValidationError("NUPTK Sudah Terdaftar.")
+    #     return nuptk
 class AuditorForm(forms.ModelForm):
     class Meta:
         model = Auditor
-        fields = ['nuptk', 'nama_lengkap', 'jabatan', 'unit_kerja', 'nomor_registrasi', 'is_auditor_ketua']
+        fields = ['nuptk', 'nama_lengkap', 'jabatan', 'unit_kerja', 'nomor_registrasi', 'is_auditor_ketua', 'status']
         widgets = {
             'nuptk': forms.TextInput(attrs={'class': 'form-control'}),
             'nama_lengkap': forms.TextInput(attrs={'class': 'form-control'}),
@@ -193,14 +193,17 @@ class AuditorForm(forms.ModelForm):
             'unit_kerja': forms.TextInput(attrs={'class': 'form-control'}),
             'nomor_registrasi': forms.TextInput(attrs={'class': 'form-control'}),
             'is_auditor_ketua': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'status': forms.Select(attrs={
+                'class': 'form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'})
+            
         }
 
-    def clean_nuptk(self):
-        """Validasi NUPTK harus unik"""
-        nuptk = self.cleaned_data['nuptk']
-        if User.objects.filter(username=nuptk).exists():
-            raise forms.ValidationError("NUPTK Sudah Terdaftar.")
-        return nuptk
+    # def clean_nuptk(self):
+    #     """Validasi NUPTK harus unik"""
+    #     nuptk = self.cleaned_data['nuptk']
+    #     if User.objects.filter(username=nuptk).exists():
+    #         raise forms.ValidationError("NUPTK Sudah Terdaftar.")
+    #     return nuptk
 
 
 class AuditSessionForm(forms.ModelForm):
