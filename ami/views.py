@@ -1096,13 +1096,16 @@ def elemen_create(request, kriteria_id=None):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
         
     kriteria = None
-    print(kriteria)
     if kriteria_id:
         kriteria = get_object_or_404(Kriteria, pk=kriteria_id)
     
+    print(kriteria)
+
     if request.method == 'POST':
+        print("masuk post")
         form = ElemenForm(request.POST)
         if form.is_valid():
+            print("valid")
             elemen = form.save()
             messages.success(request, f'Elemen "{elemen.nama}" berhasil dibuat.')
             return redirect('ami:kriteria_detail', pk=kriteria_id)
@@ -1125,8 +1128,10 @@ def elemen_update(request, pk):
         
     elemen = get_object_or_404(Elemen, pk=pk)
     if request.method == 'POST':
+        print("masuk post")
         form = ElemenForm(request.POST, instance=elemen)
         if form.is_valid():
+            print("valid")
             elemen = form.save()
             messages.success(request, f'Elemen "{elemen.nama}" berhasil diperbarui.')
             return redirect('ami:kriteria_detail', pk=elemen.kriteria.id)

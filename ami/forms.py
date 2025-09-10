@@ -125,7 +125,7 @@ class ElemenForm(forms.ModelForm):
     """Form untuk model Elemen"""
     class Meta:
         model = Elemen
-        fields = ['kriteria', 'kode', 'nama', 'deskripsi']
+        fields = '__all__'
         widgets = {
             'kriteria': forms.Select(attrs={
                 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
@@ -142,7 +142,19 @@ class ElemenForm(forms.ModelForm):
                 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'rows': 4,
                 'placeholder': 'Deskripsi lengkap elemen'
-            })
+            }),
+            'panduan': forms.Textarea(attrs={
+                'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'rows': 20,
+                'placeholder': 'Panduan Indikator Penilaian '
+            }),
+            'skor_maksimal': forms.NumberInput(attrs={
+                'class':  'form-control',
+                'placeholder': 'Skor Maksimal'
+            }),
+             'status': forms.Select(attrs={
+                'class': 'form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+            }),
         }
     
     def __init__(self, *args, **kwargs):
@@ -259,7 +271,7 @@ class PenilaianDiriForm(forms.ModelForm):
         fields = ['elemen', 'skor', 'komentar', 'status']
         widgets = {
             'elemen': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'skor': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '4', 'step': '0.01'}),
+            'skor': forms.NumberInput(attrs={'class': 'form-control'}),
             'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
