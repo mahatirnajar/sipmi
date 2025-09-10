@@ -184,7 +184,7 @@ class AuditSession(models.Model):
 
         # Draft → Penilaian Mandiri
         if self.status == 'DRAFT' and today >= self.tanggal_mulai_penilaian_mandiri:
-            self.status = 'PENILAIAN_MANDIRI'  # Perbaiki typo: PENIALAIN → PENILAIAN
+            self.status = 'PENILAIAN_MANDIRI'  
             self.save(update_fields=['status'])
             return
 
@@ -192,7 +192,7 @@ class AuditSession(models.Model):
         if self.status == 'PENILAIAN_MANDIRI' and self.tanggal_selesai_penilaian_mandiri:
             if today > self.tanggal_selesai_penilaian_mandiri and self.tanggal_mulai_penilaian_mandiri_penilaian_auditor:
                 if today >= self.tanggal_mulai_penilaian_mandiri_penilaian_auditor:
-                    self.status = 'PENILAIAN_AUDITOR'  # Perbaiki typo juga di sini
+                    self.status = 'PENILAIAN_AUDITOR'  
                     self.save(update_fields=['status'])
                     return
 
