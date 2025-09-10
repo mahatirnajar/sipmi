@@ -206,20 +206,51 @@ class AuditorForm(forms.ModelForm):
     #     return nuptk
 
 
+# forms.py
+from django import forms
+from .models import AuditSession, Auditor
+
 class AuditSessionForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Filter hanya auditor aktif
+        aktif_auditor = Auditor.objects.filter(status='aktif')
+
+        self.fields['auditor_ketua'].queryset = aktif_auditor
+        self.fields['auditor_anggota'].queryset = aktif_auditor
+
+        # Tambahkan class select2 ke widget
+        self.fields['auditor_ketua'].widget.attrs.update({
+            'class': 'form-control select2'
+        })
+        self.fields['auditor_anggota'].widget.attrs.update({
+            'class': 'form-control select2-multiple',
+            'data-placeholder': 'Pilih auditor anggota...'
+        
+        })
+        ##jika ingin menampilkan nama tanpa nuptk/nidn
+        # self.fields['auditor_ketua'].label_from_instance = lambda obj: f"{obj.nama_lengkap}"
+        # self.fields['auditor_anggota'].label_from_instance = lambda obj: f"{obj.nama_lengkap}"
+
     class Meta:
         model = AuditSession
-        fields = ['program_studi', 'tahun_akademik', 'semester', 'tanggal_mulai_penilaian_mandiri', 'tanggal_selesai_penilaian_mandiri','tanggal_selesai_penilian_auditor', 'status', 'auditor_ketua', 'auditor_anggota']
+        fields = [
+            'program_studi', 'tahun_akademik', 'semester',
+            'tanggal_mulai_penilaian_mandiri', 'tanggal_selesai_penilaian_mandiri',
+            'tanggal_selesai_penilaian_auditor', 'status',
+            'auditor_ketua', 'auditor_anggota'
+        ]
         widgets = {
             'program_studi': forms.Select(attrs={'class': 'form-control'}),
             'tahun_akademik': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 2023/2024'}),
             'semester': forms.Select(attrs={'class': 'form-control'}),
             'tanggal_mulai_penilaian_mandiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'tanggal_selesai_penilaian_mandiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'tanggal_selesai_penilian_auditor': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'tanggal_selesai_penilaian_auditor': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
-            'auditor_ketua': forms.Select(attrs={'class': 'form-control'}),
-            'auditor_anggota': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'auditor_ketua': forms.Select(),  # akan diatur di __init__
+            'auditor_anggota': forms.SelectMultiple(),  # akan diatur di __init__
         }
 
 class PenilaianDiriForm(forms.ModelForm):

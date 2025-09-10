@@ -152,7 +152,7 @@ class Auditor(models.Model):
         ordering = ['nama_lengkap']
     
     def __str__(self):
-        return f"{self.nama_lengkap} ({self.nomor_registrasi})"
+        return f"{self.nama_lengkap} ({self.nuptk})"
 
 class AuditSession(models.Model):
     """Model untuk sesi audit (mengelompokkan penilaian untuk satu siklus audit)"""
@@ -164,7 +164,7 @@ class AuditSession(models.Model):
     ])
     tanggal_mulai_penilaian_mandiri = models.DateField(blank=True, null=True)
     tanggal_selesai_penilaian_mandiri = models.DateField(blank=True, null=True)
-    tanggal_selesai_penilian_auditor = models.DateField(blank=True, null=True)
+    tanggal_selesai_penilaian_auditor = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('DRAFT', 'Draft'),
         ('PENIALAIN MANDIRI', 'Penilaian Mandiri'),
