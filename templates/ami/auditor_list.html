@@ -56,15 +56,9 @@
                             {{ auditor.unit_kerja }}
                         </td>
                         <td class="px-3 lg:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                            {% if auditor.is_auditor_ketua %}
                             <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
-                                Ketua
+                                {{auditor.status}}
                             </span>
-                            {% else %}
-                            <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-gray-100 text-gray-800">
-                                Anggota
-                            </span>
-                            {% endif %}
                         </td>
                         <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm font-medium">
                             <div class="flex flex-wrap gap-2">

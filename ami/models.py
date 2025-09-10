@@ -140,6 +140,11 @@ class Auditor(models.Model):
     unit_kerja = models.CharField(max_length=255)
     nomor_registrasi = models.CharField(max_length=50, blank=True, null=True)
     is_auditor_ketua = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=[
+        ('aktif', 'aktif'),
+        ('tidak aktif', 'tidak aktif'),
+    ], default='aktif')
+    
     
     class Meta:
         verbose_name = "Auditor"
