@@ -1096,6 +1096,7 @@ def elemen_create(request, kriteria_id=None):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
         
     kriteria = None
+    print(kriteria)
     if kriteria_id:
         kriteria = get_object_or_404(Kriteria, pk=kriteria_id)
     
@@ -1104,7 +1105,7 @@ def elemen_create(request, kriteria_id=None):
         if form.is_valid():
             elemen = form.save()
             messages.success(request, f'Elemen "{elemen.nama}" berhasil dibuat.')
-            return redirect('ami:elemen_list', kriteria_id=kriteria_id)
+            return redirect('ami:kriteria_detail', pk=kriteria_id)
     else:
         initial = {'kriteria': kriteria} if kriteria else {}
         form = ElemenForm(initial=initial)
@@ -1128,7 +1129,7 @@ def elemen_update(request, pk):
         if form.is_valid():
             elemen = form.save()
             messages.success(request, f'Elemen "{elemen.nama}" berhasil diperbarui.')
-            return redirect('ami:elemen_list', kriteria_id=elemen.kriteria.id)
+            return redirect('ami:kriteria_detail', pk=elemen.kriteria.id)
     else:
         form = ElemenForm(instance=elemen)
     
@@ -1162,7 +1163,7 @@ def elemen_delete(request, pk):
         kriteria_id = elemen.kriteria.id
         elemen.delete()
         messages.success(request, f'Elemen "{nama}" berhasil dihapus.')
-        return redirect('ami:elemen_list', kriteria_id=kriteria_id)
+        return redirect('ami:kriteria_detail', pk=kriteria_id)
     
     return render(request, 'ami/elemen_confirm_delete.html', {
         'elemen': elemen
