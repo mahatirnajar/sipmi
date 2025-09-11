@@ -7,6 +7,8 @@ from django.http import HttpResponseForbidden, Http404
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
 from django.http import JsonResponse
+from django.db.models import Q
+from django.utils import timezone
 
 from .models import (
     LembagaAkreditasi,
@@ -37,6 +39,16 @@ from .forms import (
 # ----------------------------
 # Helper Functions
 # ----------------------------
+def get_user_program_studi(user):
+    """Mendapatkan program studi yang terkait dengan user"""
+    try:
+        # Perbaikan: Mengakses program_studi dari KoordinatorProgramStudi
+        if hasattr(user, 'koordinatorprogramstudi'):
+            return user.koordinatorprogramstudi.program_studi
+        return None
+    except AttributeError:
+        return None
+    
 def get_user_program_studi(user):
     """Mendapatkan program studi yang terkait dengan user"""
     try:
@@ -557,28 +569,39 @@ def audit_session_create(request):
 def audit_session_detail(request, pk):
     """View untuk detail sesi audit"""
     audit_session = get_object_or_404(AuditSession, pk=pk)
-    
+    # Perbarui status berdasarkan tanggal
+
+    audit_session.update_status()
     # Periksa izin akses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
     
-    # Ambil data penilaian diri
-    penilaian_diri = PenilaianDiri.objects.filter(
-        audit_session=audit_session
-    ).select_related(
-        'elemen', 'elemen__kriteria'
-    ).order_by('elemen__kriteria', 'elemen')
+    # Ambil semua elemen dari lembaga akreditasi prodi
+    lembaga = audit_session.program_studi.lembaga_akreditasi
+    semua_elemen = Elemen.objects.filter(kriteria__lembaga_akreditasi=lembaga).order_by('kode')
+    
+    # Untuk setiap elemen, pastikan ada penilaian diri
+    penilaian_diri_list = []
+    for elemen in semua_elemen:
+        penilaian, created = PenilaianDiri.objects.get_or_create(
+            audit_session=audit_session,
+            elemen=elemen,
+            defaults={
+                'status': 'BELUM'
+            }
+        )
+        penilaian_diri_list.append(penilaian)
     
     # Hitung statistik
-    total_indikator = penilaian_diri.count()
-    indikator_terisi = penilaian_diri.exclude(skor__isnull=True).count()
+    total_indikator = len(penilaian_diri_list)
+    indikator_terisi = sum(1 for p in penilaian_diri_list if p.skor is not None)
     persentase_terisi = (indikator_terisi / total_indikator * 100) if total_indikator > 0 else 0
     
     # Ambil data audit
     audit_items = Audit.objects.filter(
-        penilaian_diri__audit_session=audit_session
+        penilaian_diri__in=penilaian_diri_list
     ).select_related(
-        'penilaian_diri', 'penilaian_diri__indikator', 'auditor'
+        'auditor'
     )
     
     # Hitung statistik audit
@@ -588,7 +611,7 @@ def audit_session_detail(request, pk):
     
     context = {
         'audit_session': audit_session,
-        'penilaian_diri': penilaian_diri,
+        'penilaian_diri': penilaian_diri_list,
         'audit_items': audit_items,
         'total_indikator': total_indikator,
         'indikator_terisi': indikator_terisi,
@@ -597,7 +620,6 @@ def audit_session_detail(request, pk):
         'audit_selesai': audit_selesai,
         'persentase_audit': persentase_audit,
     }
-    
     return render(request, 'ami/audit_session_detail.html', context)
 
 @login_required
@@ -641,25 +663,31 @@ def audit_session_delete(request, pk):
 # ----------------------------
 @login_required
 def penilaian_diri_list(request, session_id):
-    """View untuk menampilkan daftar penilaian diri"""
     audit_session = get_object_or_404(AuditSession, pk=session_id)
-    
-    # Periksa izin akses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
     
+    # Kelompokkan penilaian diri berdasarkan kriteria
     penilaian_diri = PenilaianDiri.objects.filter(
         audit_session=audit_session
     ).select_related(
-        'indikator', 'indikator__elemen', 'indikator__elemen__kriteria'
-    ).order_by('indikator__kode')
+        'elemen', 'elemen__kriteria'
+    ).order_by('elemen__kriteria__kode', 'elemen__kode')
+    
+    # Susun ulang data menjadi dictionary {kriteria: [daftar_penilaian]}
+    grouped_data = {}
+    for pd in penilaian_diri:
+        kriteria = pd.elemen.kriteria
+        if kriteria not in grouped_data:
+            grouped_data[kriteria] = []
+        grouped_data[kriteria].append(pd)
     
     context = {
         'audit_session': audit_session,
-        'penilaian_diri': penilaian_diri
+        'grouped_data': grouped_data
     }
-    
     return render(request, 'ami/penilaian_diri_list.html', context)
+
 
 @login_required
 def penilaian_diri_create(request, session_id):
@@ -708,31 +736,78 @@ def penilaian_diri_update(request, pk):
     if not check_program_studi_permission(request.user, audit_session.program_studi):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengubah penilaian diri ini.")
     
+    # Periksa status sesi audit
+    if audit_session.status not in ['DRAFT', 'PENILAIAN_MANDIRI']:
+        messages.error(request, "Penilaian hanya bisa diubah saat status sesi adalah 'Draft' atau 'Penilaian Mandiri'.")
+        return redirect('ami:audit_session_detail', pk=audit_session.id)
+    
+    # Periksa apakah masih dalam rentang tanggal penilaian mandiri
+    today = timezone.now().date()
+    if audit_session.tanggal_mulai_penilaian_mandiri and audit_session.tanggal_selesai_penilaian_mandiri:
+        if today < audit_session.tanggal_mulai_penilaian_mandiri or today > audit_session.tanggal_selesai_penilaian_mandiri:
+            messages.error(request, "Penilaian hanya bisa diubah dalam rentang tanggal penilaian mandiri.")
+            return redirect('ami:audit_session_detail', pk=audit_session.id)
+    
     if request.method == 'POST':
         form = PenilaianDiriForm(request.POST, request.FILES, instance=penilaian)
         if form.is_valid():
             penilaian = form.save()
+            # Update status penilaian
+            if penilaian.skor is not None:
+                penilaian.status = 'TERISI'
+                penilaian.save()
             
             # Jika ada file dokumen pendukung yang diunggah
             if 'bukti_dokumen' in request.FILES:
                 dokumen = DokumenPendukung(
                     penilaian_diri=penilaian,
-                    nama=f"Dokumen Pendukung {penilaian.indikator.kode}",
+                    nama=f"Dokumen Pendukung {penilaian.elemen.kode}",
                     file=request.FILES['bukti_dokumen'],
                     deskripsi="Dokumen pendukung yang diunggah bersama penilaian"
                 )
                 dokumen.save()
-                
             messages.success(request, 'Penilaian diri berhasil diperbarui.')
-            return redirect('ami:penilaian_diri_list', session_id=audit_session.id)
+            return redirect('ami:audit_session_detail', pk=audit_session.id)
     else:
         form = PenilaianDiriForm(instance=penilaian)
-    
     return render(request, 'ami/penilaian_diri_form.html', {
         'form': form,
         'audit_session': audit_session,
         'title': f'Edit Penilaian Diri - {audit_session.program_studi}'
     })
+
+
+@login_required
+def submit_penilaian_diri(request, session_id):
+    """View untuk mengirim penilaian diri dan mengubah status sesi audit"""
+    audit_session = get_object_or_404(AuditSession, pk=session_id)
+    
+    # Periksa izin akses - hanya program studi yang bersangkutan yang bisa mengirim
+    if not check_program_studi_permission(request.user, audit_session.program_studi):
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengirim penilaian ini.")
+    
+    # Periksa status saat ini
+    if audit_session.status != 'PENILAIAN_MANDIRI':
+        messages.error(request, "Penilaian hanya bisa dikirim saat status sesi adalah 'Penilaian Mandiri'.")
+        return redirect('ami:audit_session_detail', pk=session_id)
+    
+    # Periksa apakah semua penilaian sudah terisi
+    penilaian_diri = PenilaianDiri.objects.filter(audit_session=audit_session)
+    belum_terisi = penilaian_diri.filter(skor__isnull=True).count()
+    
+    if belum_terisi > 0:
+        messages.error(request, f"Masih ada {belum_terisi} elemen yang belum dinilai. Silakan lengkapi semua penilaian terlebih dahulu.")
+        return redirect('ami:audit_session_detail', pk=session_id)
+    
+    # Ubah status penilaian diri menjadi 'DIAJUKAN'
+    penilaian_diri.update(status='DIAJUKAN')
+    
+    # Ubah status sesi audit menjadi 'PENILAIAN_AUDITOR'
+    audit_session.status = 'PENILAIAN_AUDITOR'
+    audit_session.save()
+    
+    messages.success(request, "Penilaian diri berhasil dikirim. Sesi audit sekarang dalam status 'Penilaian Auditor'.")
+    return redirect('ami:audit_session_detail', pk=session_id)
 
 # ----------------------------
 # Views untuk Audit
@@ -768,11 +843,9 @@ def audit_update(request, pk):
     audit_item = get_object_or_404(Audit, pk=pk)
     penilaian_diri = audit_item.penilaian_diri
     audit_session = penilaian_diri.audit_session
-    
     # Periksa izin akses - hanya auditor yang ditunjuk yang bisa mengakses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengubah audit ini.")
-    
     if request.method == 'POST':
         form = AuditForm(request.POST, instance=audit_item)
         if form.is_valid():
@@ -786,14 +859,12 @@ def audit_update(request, pk):
             return redirect('ami:audit_list', session_id=audit_session.id)
     else:
         form = AuditForm(instance=audit_item)
-    
     return render(request, 'ami/audit_form.html', {
         'form': form,
         'audit_session': audit_session,
         'penilaian_diri': penilaian_diri,
-        'title': f'Audit - {audit_session.program_studi} - {penilaian_diri.indikator.kode}'
+        'title': f'Audit - {audit_session.program_studi} - {penilaian_diri.elemen.kode}'  # Perbaikan: ganti indikator dengan elemen
     })
-
 # ----------------------------
 # Views untuk Dokumen Pendukung
 # ----------------------------
@@ -802,11 +873,9 @@ def dokumen_pendukung_create(request, penilaian_id):
     """View untuk menambah dokumen pendukung"""
     penilaian = get_object_or_404(PenilaianDiri, pk=penilaian_id)
     audit_session = penilaian.audit_session
-    
     # Periksa izin akses
     if not check_program_studi_permission(request.user, audit_session.program_studi):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengunggah dokumen pendukung ini.")
-    
     if request.method == 'POST':
         form = DokumenPendukungForm(request.POST, request.FILES)
         if form.is_valid():
@@ -817,11 +886,10 @@ def dokumen_pendukung_create(request, penilaian_id):
             return redirect('ami:penilaian_diri_list', session_id=audit_session.id)
     else:
         form = DokumenPendukungForm()
-    
     return render(request, 'ami/dokumen_pendukung_form.html', {
         'form': form,
         'penilaian': penilaian,
-        'title': f'Unggah Dokumen Pendukung - {penilaian.indikator.kode}'
+        'title': f'Unggah Dokumen Pendukung - {penilaian.elemen.kode}'  # Perbaikan: ganti indikator dengan elemen
     })
 
 @login_required
@@ -904,19 +972,17 @@ def rekomendasi_tindak_lanjut_update(request, pk):
 def laporan_audit(request, session_id):
     """View untuk menampilkan laporan audit"""
     audit_session = get_object_or_404(AuditSession, pk=session_id)
-    
     # Periksa izin akses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses laporan ini.")
-    
     # Ambil semua penilaian diri dan hasil audit
     penilaian_diri_list = PenilaianDiri.objects.filter(
         audit_session=audit_session
     ).select_related(
-        'indikator', 'indikator__elemen', 'indikator__elemen__kriteria'
+        'elemen', 'elemen__kriteria'  # Perbaikan: ganti indikator dengan elemen
     ).prefetch_related(
         'dokumen_pendukung'
-    ).order_by('indikator__kode')
+    ).order_by('elemen__kode')  # Perbaikan: ganti indikator__kode dengan elemen__kode
     
     # Hitung statistik untuk laporan
     total_indikator = penilaian_diri_list.count()
@@ -926,24 +992,20 @@ def laporan_audit(request, session_id):
     # Hitung skor per kriteria
     kriteria_scores = []
     kriteria_list = audit_session.program_studi.lembaga_akreditasi.kriteria.all()
-    
     for kriteria in kriteria_list:
         total_skor = 0
         count = 0
-        
         for elemen in kriteria.elemen.all():
-            for indikator in elemen.indikator.all():
-                try:
-                    penilaian = PenilaianDiri.objects.get(
-                        audit_session=audit_session,
-                        indikator=indikator
-                    )
-                    if penilaian.skor is not None:
-                        total_skor += penilaian.skor
-                        count += 1
-                except PenilaianDiri.DoesNotExist:
-                    pass
-        
+            try:
+                penilaian = PenilaianDiri.objects.get(
+                    audit_session=audit_session,
+                    elemen=elemen  # Perbaikan: ganti indikator dengan elemen
+                )
+                if penilaian.skor is not None:
+                    total_skor += penilaian.skor
+                    count += 1
+            except PenilaianDiri.DoesNotExist:
+                pass
         if count > 0:
             rata_rata = total_skor / count
             kriteria_scores.append({
@@ -966,8 +1028,8 @@ def laporan_audit(request, session_id):
         'kriteria_scores': kriteria_scores,
         'skor_akhir': skor_akhir,
     }
-    
     return render(request, 'ami/laporan_audit.html', context)
+
 
 # ----------------------------
 # Views untuk Kriteria

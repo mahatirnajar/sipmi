@@ -1,13 +1,9 @@
-
 {% extends 'base.html' %}
 {% load static %}
-{% comment %} {% load custom_filters %} {% endcomment %}
-
 {% block title %}Detail Sesi Audit - {{ audit_session.program_studi.nama }} | Sistem Audit Mutu Internal{% endblock %}
 {% block page_title %}Detail Sesi Audit{% endblock %}
 {% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.semester }}){% endblock %}
 {% block mobile_title %}Detail Sesi Audit{% endblock %}
-
 {% block content %}
 <div class="p-4 lg:p-6">
     {% if messages %}
@@ -20,217 +16,161 @@
     </div>
     {% endif %}
     
-    <div class="grid grid-cols-1 gap-4 lg:gap-6">
-        <!-- Informasi Sesi Audit -->
-        <div>
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
-                <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Informasi Sesi Audit</h3>
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Detail Sesi Audit</h3>
+                    <p class="text-sm text-gray-500 mt-1">Status: 
+                        <span class="px-2 py-1 rounded-full text-xs font-medium 
+                            {% if audit_session.status == 'DRAFT' %}bg-gray-100 text-gray-800
+                            {% elif audit_session.status == 'PENILAIAN_MANDIRI' %}bg-blue-100 text-blue-800
+                            {% elif audit_session.status == 'PENILAIAN_AUDITOR' %}bg-purple-100 text-purple-800
+                            {% elif audit_session.status == 'SELESAI' %}bg-green-100 text-green-800
+                            {% endif %}">
+                            {{ audit_session.get_status_display }}
+                        </span>
+                    </p>
                 </div>
-                <div class="p-4 lg:p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Program Studi</p>
-                            <p class="text-lg font-medium text-gray-900">{{ audit_session.program_studi.nama }}</p>
-                            <p class="text-xs lg:text-sm text-gray-500">{{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.akreditasi }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Periode</p>
-                            <p class="text-lg font-medium text-gray-900">{{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Tanggal Mulai Penilaian Mandiri</p>
-                            <p class="text-lg font-medium text-gray-900">{{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d F Y" }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Tanggal Batas Penilaian Mandiri</p>
-                            <p class="text-lg font-medium text-gray-900">{{ audit_session.tanggal_selesai_penilaian_mandiri|date:"d F Y" }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Tanggal Batas Penilaian Auditor</p>
-                            <p class="text-lg font-medium text-gray-900">{{ audit_session.tanggal_selesai_penilaian_auditor|date:"d F Y" }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Status</p>
-                            {% if audit_session.status == 'SELESAI' %}
-                            <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-green-100 text-green-800">{{audit_session.status}}</span>
-                            {% else %}
-                            <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">{{audit_session.status}}</span>
+                <div class="mt-3 lg:mt-0 flex space-x-2">
+                    {% if audit_session.status == 'PENILAIAN_MANDIRI' and user_program_studi == audit_session.program_studi %}
+                    <form method="post" action="{% url 'ami:submit_penilaian_diri' audit_session.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i> Kirim Penilaian Diri
+                        </button>
+                    </form>
+                    {% endif %}
+                    <a href="{% url 'ami:audit_session_update' audit_session.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-edit mr-2"></i> Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 lg:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">Informasi Program Studi</h4>
+                    <p><strong>Nama:</strong> {{ audit_session.program_studi.nama }}</p>
+                    <p><strong>Fakultas:</strong> {{ audit_session.program_studi.fakultas }}</p>
+                    <p><strong>Jenjang:</strong> {{ audit_session.program_studi.get_jenjang_display }}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">Rentang Waktu</h4>
+                    <p><strong>Penilaian Mandiri:</strong> 
+                        {% if audit_session.tanggal_mulai_penilaian_mandiri and audit_session.tanggal_selesai_penilaian_mandiri %}
+                            {{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d M Y" }} - {{ audit_session.tanggal_selesai_penilaian_mandiri|date:"d M Y" }}
+                        {% else %}
+                            Tidak ditentukan
+                        {% endif %}
+                    </p>
+                    <p><strong>Penilaian Auditor:</strong> 
+                        {% if audit_session.tanggal_mulai_penilaian_auditor and audit_session.tanggal_selesai_penilaian_auditor %}
+                            {{ audit_session.tanggal_mulai_penilaian_auditor|date:"d M Y" }} - {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d M Y" }}
+                        {% else %}
+                            Tidak ditentukan
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Penilaian Diri</h3>
+            <div class="space-y-4">
+                {% for penilaian in penilaian_diri %}
+                <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start">
+                        <div class="lg:mr-4 mb-2 lg:mb-0">
+                            <h4 class="font-medium text-gray-900">{{ penilaian.elemen.kode }} - {{ penilaian.elemen.nama }}</h4>
+                            <p class="text-sm text-gray-500 mt-1">{{ penilaian.elemen.kriteria.nama }}</p>
+                            
+                            <!-- Tambahkan deskripsi dan panduan -->
+                            <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                                <h5 class="font-medium text-gray-800 mb-1">Deskripsi:</h5>
+                                <p class="text-sm text-gray-700">{{ penilaian.elemen.deskripsi }}</p>
+                                
+                                <h5 class="font-medium text-gray-800 mt-3 mb-1">Panduan Pengisian:</h5>
+                                <div class="text-sm text-gray-700 prose max-w-none">
+                                    {{ penilaian.elemen.panduan|safe }}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 flex flex-wrap items-center space-x-2">
+                                <span class="text-sm">
+                                    <span class="font-medium">Skor:</span> 
+                                    {% if penilaian.skor is not None %}
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-medium">
+                                        {{ penilaian.skor }} ({{ penilaian.skor|floatformat:2 }} dari {{ penilaian.elemen.skor_maksimal }})
+                                    </span>
+                                    {% else %}
+                                    <span class="text-gray-500">Belum diisi</span>
+                                    {% endif %}
+                                </span>
+                                <span class="text-sm">
+                                    <span class="font-medium">Status:</span> 
+                                    {% if penilaian.status == 'DIAJUKAN' %}
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Diajukan</span>
+                                    {% elif penilaian.status == 'TERISI' %}
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">Terisi</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">Belum</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if penilaian.komentar %}
+                            <p class="text-sm text-gray-700 mt-2">
+                                <span class="font-medium">Komentar:</span> {{ penilaian.komentar }}
+                            </p>
                             {% endif %}
                         </div>
-                        <div>
-                            <p class="text-xs lg:text-sm text-gray-500">Auditor Ketua</p>
-                            <p class="text-lg font-medium text-gray-900">{{ audit_session.auditor_ketua.nama_lengkap }}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 lg:mt-6">
-                        <p class="text-xs lg:text-sm text-gray-500 mb-2">Auditor Anggota</p>
-                        <div class="flex flex-wrap gap-1 lg:gap-2">
-                            {% for auditor in audit_session.auditor_anggota.all %}
-                            <span class="px-2 py-1 lg:px-3 lg:py-1 bg-gray-100 text-gray-800 rounded-full text-xs lg:text-sm">
-                                {{ auditor.nama_lengkap }}
-                            </span>
-                            {% empty %}
-                            <p class="text-xs lg:text-sm text-gray-500">Tidak ada auditor anggota</p>
-                            {% endfor %}
+                        <div class="flex space-x-2 mt-2 lg:mt-0">
+                            {% if audit_session.status == 'DRAFT' or audit_session.status == 'PENILAIAN_MANDIRI' %}
+                            <a href="{% url 'ami:penilaian_diri_update' penilaian.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-edit text-lg"></i>
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Tab Navigasi -->
-            <div class="bg-white rounded-xl shadow-sm mb-4 lg:mb-6 overflow-x-auto">
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex space-x-4 lg:space-x-8 px-4 lg:px-6 whitespace-nowrap">
-                        <a href="#penilaian-dir" class="tab-link active text-blue-600 border-b-2 border-blue-600 px-1 pb-3 lg:pb-4 text-xs lg:text-sm font-medium whitespace-nowrap">
-                            Penilaian Diri
-                        </a>
-                        <a href="#audit" class="tab-link text-gray-500 hover:text-gray-700 border-b-2 border-transparent px-1 pb-3 lg:pb-4 text-xs lg:text-sm font-medium whitespace-nowrap">
-                            Hasil Audit
-                        </a>
-                        <a href="#rekomendasi" class="tab-link text-gray-500 hover:text-gray-700 border-b-2 border-transparent px-1 pb-3 lg:pb-4 text-xs lg:text-sm font-medium whitespace-nowrap">
-                            Rekomendasi
-                        </a>
-                        <a href="#laporan" class="tab-link text-gray-500 hover:text-gray-700 border-b-2 border-transparent px-1 pb-3 lg:pb-4 text-xs lg:text-sm font-medium whitespace-nowrap">
-                            Laporan
-                        </a>
-                    </nav>
+                {% empty %}
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <i class="fas fa-clipboard-list text-3xl text-gray-300 mb-3"></i>
+                    <h3 class="text-base font-medium text-gray-900">Tidak ada elemen penilaian</h3>
+                    <p class="mt-1 text-sm text-gray-500">Belum ada elemen penilaian yang tersedia untuk sesi ini.</p>
                 </div>
-            </div>
-            
-            <!-- Konten Tab Penilaian Diri -->
-            <div id="penilaian-dir-content" class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
-                <div class="px-4 lg:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-                    <h3 class="text-lg font-semibold text-gray-900">Penilaian Diri</h3>
-                    <a href="{% url 'ami:penilaian_diri_create' audit_session.id %}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">Tambah Penilaian</a>
-                </div>
-                <div class="p-4 lg:p-6">
-                    <div class="mb-3 lg:mb-4 flex justify-between items-center">
-                        <div class="w-full max-w-xs">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-search text-gray-400"></i>
-                                </div>
-                                <input type="text" id="search-penilaian" class="block w-full pl-10 pr-3 py-1.5 lg:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Cari Elemen Pendilaian...">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-3 lg:space-y-4">
-                        {% for penilaian in penilaian_diri %}
-                        <div class="border rounded-lg p-3 lg:p-4 hover:bg-gray-50 transition-colors">
-                            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start">
-                                <div class="lg:mr-4 mb-2 lg:mb-0">
-                                    <h4 class="font-medium text-gray-900">{{ penilaian.elemen.kode }} - {{ penilaian.elemen.nama }}</h4>
-                                    <p class="text-xs lg:text-sm text-gray-500 mt-1">{{ penilaian.elemen.nama }}</p>
-                                    <div class="mt-2 flex flex-wrap items-center space-x-2">
-                                        <span class="text-xs">
-                                            <span class="font-medium">Skor:</span> 
-                                            {% if penilaian.skor is not None %}
-                                            <span class="px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{{ elemen.skor }}</span>
-                                            {% else %}
-                                            <span class="text-gray-500">Belum diisi</span>
-                                            {% endif %}
-                                        </span>
-                                        <span class="text-xs">
-                                            <span class="font-medium">Status:</span> 
-                                            {% if penilaian.status == 'selesai' %}
-                                            <span class="px-1 py-0.5 bg-green-100 text-green-800 rounded text-xs">Selesai</span>
-                                            {% elif penilaian.status == 'proses' %}
-                                            <span class="px-1 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">Proses</span>
-                                            {% else %}
-                                            <span class="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-xs">Draf</span>
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    {% if penilaian.komentar %}
-                                    <p class="text-xs lg:text-sm text-gray-700 mt-2">
-                                        <span class="font-medium">Komentar:</span> {{ penilaian.komentar }}
-                                    </p>
-                                    {% endif %}
-                                </div>
-                                <div class="flex space-x-2 mt-2 lg:mt-0">
-                                    <a href="{% url 'ami:penilaian_diri_update' penilaian.id %}" class="text-blue-600 hover:text-blue-900">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="text-center py-8 bg-gray-50 rounded-lg">
-                            <i class="fas fa-clipboard-list text-3xl text-gray-300 mb-3"></i>
-                            <h3 class="text-base font-medium text-gray-900">Tidak ada penilaian diri</h3>
-                            <p class="mt-1 text-sm text-gray-500">Belum ada penilaian diri yang dibuat untuk sesi ini.</p>
-                            <div class="mt-4">
-                                <a href="{% url 'ami:penilaian_diri_create' audit_session.id %}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                                    <i class="fas fa-plus mr-1.5"></i> Buat Penilaian Diri
-                                </a>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
     
-    {% block scripts %}
-    {{ block.super }}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabLinks = document.querySelectorAll('.tab-link');
-            const tabContents = {
-                'penilaian-dir': document.getElementById('penilaian-dir-content'),
-                'audit': document.getElementById('audit-content'),
-                'rekomendasi': document.getElementById('rekomendasi-content'),
-                'laporan': document.getElementById('laporan-content')
-            };
-            
-            // Tab functionality
-            tabLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Remove active class from all tabs
-                    tabLinks.forEach(l => {
-                        l.classList.remove('text-blue-600', 'border-blue-600');
-                        l.classList.add('text-gray-500');
-                    });
-                    
-                    // Add active class to clicked tab
-                    this.classList.remove('text-gray-500');
-                    this.classList.add('text-blue-600', 'border-blue-600');
-                    
-                    // Hide all tab contents
-                    Object.values(tabContents).forEach(content => {
-                        content.classList.add('hidden');
-                    });
-                    
-                    // Show the selected tab content
-                    const tabName = this.getAttribute('href').substring(1);
-                    tabContents[tabName].classList.remove('hidden');
-                });
-            });
-            
-            // Search functionality for penilaian diri
-            const searchInput = document.getElementById('search-penilaian');
-            if (searchInput) {
-                searchInput.addEventListener('keyup', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const items = document.querySelectorAll('#penilaian-dir-content .border');
-                    
-                    items.forEach(item => {
-                        const text = item.textContent.toLowerCase();
-                        if (text.includes(searchTerm)) {
-                            item.style.display = '';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                });
-            }
-        });
-    </script>
-    {% endblock %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Statistik Penilaian</h3>
+        </div>
+        <div class="p-4 lg:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Elemen</p>
+                        <p class="text-xl font-bold text-gray-900">{{ total_indikator }}</p>
+                    </div>
+                    <i class="fas fa-list text-2xl text-blue-500"></i>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm text-gray-500">Elemen Terisi</p>
+                        <p class="text-xl font-bold text-gray-900">{{ indikator_terisi }}</p>
+                    </div>
+                    <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm text-gray-500">Persentase</p>
+                        <p class="text-xl font-bold text-gray-900">{{ persentase_terisi|floatformat:1 }}%</p>
+                    </div>
+                    <i class="fas fa-chart-pie text-2xl text-purple-500"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

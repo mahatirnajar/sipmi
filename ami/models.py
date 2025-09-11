@@ -167,42 +167,42 @@ class AuditSession(models.Model):
     tanggal_selesai_penilaian_auditor = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('DRAFT', 'Draft'),
-        ('PENILAIN MANDIRI', 'Penilaian Mandiri'),
-        ('PENIALAIN AUDITOR', 'Penilaian Auditor'),
+        ('PENILAIAN_MANDIRI', 'Penilaian Mandiri'),  # Diperbaiki typo
+        ('PENILAIAN_AUDITOR', 'Penilaian Auditor'),  # Diperbaiki typo
         ('SELESAI', 'SELESAI'),
     ], default='DRAFT')
+    
     auditor_ketua = models.ForeignKey(Auditor, on_delete=models.SET_NULL, null=True, blank=True, related_name='ketua_audit_sessions')
     auditor_anggota = models.ManyToManyField(Auditor, related_name='anggota_audit_sessions', blank=True)
     
     def update_status(self):
         """Perbarui status berdasarkan tanggal saat ini."""
         today = timezone.now().date()
-
         # Jika belum ada tanggal mulai mandiri, tetap di DRAFT
         if not self.tanggal_mulai_penilaian_mandiri:
             return
-
+        
         # Draft → Penilaian Mandiri
         if self.status == 'DRAFT' and today >= self.tanggal_mulai_penilaian_mandiri:
             self.status = 'PENILAIAN_MANDIRI'  
             self.save(update_fields=['status'])
             return
-
+        
         # Penilaian Mandiri → Penilaian Auditor
         if self.status == 'PENILAIAN_MANDIRI' and self.tanggal_selesai_penilaian_mandiri:
-            if today > self.tanggal_selesai_penilaian_mandiri and self.tanggal_mulai_penilaian_mandiri_penilaian_auditor:
-                if today >= self.tanggal_mulai_penilaian_mandiri_penilaian_auditor:
+            if today > self.tanggal_selesai_penilaian_mandiri:
+                if self.tanggal_mulai_penilaian_auditor and today >= self.tanggal_mulai_penilaian_auditor:
                     self.status = 'PENILAIAN_AUDITOR'  
                     self.save(update_fields=['status'])
                     return
-
+        
         # Penilaian Auditor → Selesai
         if self.status == 'PENILAIAN_AUDITOR' and self.tanggal_selesai_penilaian_auditor:
             if today > self.tanggal_selesai_penilaian_auditor:
                 self.status = 'SELESAI'
                 self.save(update_fields=['status'])
                 return
-
+            
     class Meta:
         verbose_name = "Sesi Audit"
         verbose_name_plural = "Sesi Audit"

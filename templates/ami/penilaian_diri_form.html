@@ -24,14 +24,21 @@
             {% csrf_token %}
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                <div>
-                    <label for="{{ form.indikator.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Indikator <span class="text-red-500">*</span></label>
-                    {{ form.indikator }}
-                    {% if form.indikator.errors %}
-                    <p class="mt-1 text-xs text-red-600">{{ form.indikator.errors|join:", " }}</p>
-                    {% endif %}
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="deskripsi">
+                        Deskripsi Elemen
+                    </label>
+                    <p class="bg-gray-50 p-3 rounded-md text-gray-700">{{ penilaian.elemen.deskripsi }}</p>
                 </div>
-                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="panduan">
+                        Panduan Pengisian Skor
+                    </label>
+                    <div class="bg-gray-50 p-3 rounded-md text-gray-700">
+                        {{ penilaian.elemen.panduan|safe }}
+                    </div>
+                </div>
+
                 <div>
                     <label for="{{ form.skor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Skor <span class="text-red-500">*</span></label>
                     {{ form.skor }}
@@ -48,7 +55,7 @@
                     <p class="mt-1 text-xs text-red-600">{{ form.komentar.errors|join:", " }}</p>
                     {% endif %}
                 </div>
-                
+
                 <div class="md:col-span-2">
                     <label for="bukti_dokumen" class="block text-sm font-medium text-gray-700 mb-1">Dokumen Pendukung</label>
                     <input type="file" name="bukti_dokumen" id="bukti_dokumen" class="block w-full text-sm text-gray-500
@@ -58,15 +65,7 @@
                         file:bg-blue-50 file:text-blue-700
                         hover:file:bg-blue-100">
                     <p class="mt-1 text-xs text-gray-500">Unggah dokumen pendukung untuk penilaian ini (opsional)</p>
-                </div>
-                
-                <div>
-                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
-                    {{ form.status }}
-                    {% if form.status.errors %}
-                    <p class="mt-1 text-xs text-red-600">{{ form.status.errors|join:", " }}</p>
-                    {% endif %}
-                </div>
+                </div>               
             </div>
             
             <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-4 pt-4 border-t border-gray-200">

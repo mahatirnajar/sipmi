@@ -268,12 +268,12 @@ class AuditSessionForm(forms.ModelForm):
 class PenilaianDiriForm(forms.ModelForm):
     class Meta:
         model = PenilaianDiri
-        fields = ['elemen', 'skor', 'komentar', 'status']
+        fields = ['skor', 'komentar']
         widgets = {
-            'elemen': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'skor': forms.NumberInput(attrs={'class': 'form-control'}),
-            'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
+            # 'elemen': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'skor': forms.NumberInput(attrs={'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
+            # 'status': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def clean_skor(self):
