@@ -492,14 +492,34 @@ def auditor_update(request, pk):
 @login_required
 def audit_session_list(request):
     """View untuk menampilkan daftar sesi audit"""
+    
+    # Dapatkan informasi user
+    user_program_studi = get_user_program_studi(request.user)
+    user_auditor = get_user_auditor(request.user)
+    
+    # Mulai dengan semua sesi audit
     audit_session_list = AuditSession.objects.select_related(
         'program_studi', 'auditor_ketua'
-    ).prefetch_related('auditor_anggota').all().order_by('-tanggal_mulai_penilaian_mandiri')
+    ).prefetch_related('auditor_anggota').all()
+    
+    # Filter berdasarkan peran user (hanya membatasi sesi yang ditampilkan, tidak menghapus dari daftar)
+    if not request.user.is_superuser:
+        if user_program_studi:
+            # Koordinator program studi hanya melihat sesi audit untuk program studi mereka
+            audit_session_list = audit_session_list.filter(program_studi=user_program_studi)
+        elif user_auditor:
+            # Auditor hanya melihat sesi audit yang mereka ditugaskan
+            audit_session_list = audit_session_list.filter(
+                Q(auditor_ketua=user_auditor) | Q(auditor_anggota=user_auditor)
+            ).distinct()
     
     # Filter berdasarkan program studi jika ada parameter
     program_studi_id = request.GET.get('program_studi')
     if program_studi_id:
         audit_session_list = audit_session_list.filter(program_studi_id=program_studi_id)
+    
+    # Urutkan
+    audit_session_list = audit_session_list.order_by('-tanggal_mulai_penilaian_mandiri')
     
     # Pagination
     paginator = Paginator(audit_session_list, 10)
@@ -511,7 +531,9 @@ def audit_session_list(request):
     
     return render(request, 'ami/audit_session_list.html', {
         'audit_sessions': audit_sessions,
-        'program_studi': program_studi
+        'program_studi': program_studi,
+        'user_program_studi': user_program_studi,
+        'user_auditor': user_auditor
     })
 
 @login_required
@@ -544,8 +566,8 @@ def audit_session_detail(request, pk):
     penilaian_diri = PenilaianDiri.objects.filter(
         audit_session=audit_session
     ).select_related(
-        'indikator', 'indikator__elemen', 'indikator__elemen__kriteria'
-    ).order_by('indikator__kode')
+        'elemen', 'elemen__kriteria'
+    ).order_by('elemen__kriteria', 'elemen')
     
     # Hitung statistik
     total_indikator = penilaian_diri.count()

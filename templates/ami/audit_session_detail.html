@@ -112,7 +112,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="fas fa-search text-gray-400"></i>
                                 </div>
-                                <input type="text" id="search-penilaian" class="block w-full pl-10 pr-3 py-1.5 lg:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Cari indikator...">
+                                <input type="text" id="search-penilaian" class="block w-full pl-10 pr-3 py-1.5 lg:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Cari Elemen Pendilaian...">
                             </div>
                         </div>
                     </div>
@@ -122,13 +122,13 @@
                         <div class="border rounded-lg p-3 lg:p-4 hover:bg-gray-50 transition-colors">
                             <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start">
                                 <div class="lg:mr-4 mb-2 lg:mb-0">
-                                    <h4 class="font-medium text-gray-900">{{ penilaian.indikator.kode }} - {{ penilaian.indikator.nama }}</h4>
-                                    <p class="text-xs lg:text-sm text-gray-500 mt-1">{{ penilaian.indikator.elemen.nama }}</p>
+                                    <h4 class="font-medium text-gray-900">{{ penilaian.elemen.kode }} - {{ penilaian.elemen.nama }}</h4>
+                                    <p class="text-xs lg:text-sm text-gray-500 mt-1">{{ penilaian.elemen.nama }}</p>
                                     <div class="mt-2 flex flex-wrap items-center space-x-2">
                                         <span class="text-xs">
                                             <span class="font-medium">Skor:</span> 
                                             {% if penilaian.skor is not None %}
-                                            <span class="px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{{ penilaian.skor }}</span>
+                                            <span class="px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{{ elemen.skor }}</span>
                                             {% else %}
                                             <span class="text-gray-500">Belum diisi</span>
                                             {% endif %}

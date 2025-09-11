@@ -167,7 +167,7 @@ class AuditSession(models.Model):
     tanggal_selesai_penilaian_auditor = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('DRAFT', 'Draft'),
-        ('PENIALAIN MANDIRI', 'Penilaian Mandiri'),
+        ('PENILAIN MANDIRI', 'Penilaian Mandiri'),
         ('PENIALAIN AUDITOR', 'Penilaian Auditor'),
         ('SELESAI', 'SELESAI'),
     ], default='DRAFT')
