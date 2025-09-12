@@ -807,7 +807,7 @@ def submit_penilaian_diri(request, session_id):
     # Periksa status saat ini
     if audit_session.status != 'PENILAIAN_MANDIRI':
         messages.error(request, "Penilaian hanya bisa dikirim saat status sesi adalah 'Penilaian Mandiri'.")
-        return redirect('ami:audit_session_detail', pk=session_id)
+        return redirect('ami:audit_session_list')
     
     # Periksa apakah semua penilaian sudah terisi
     penilaian_diri = PenilaianDiri.objects.filter(audit_session=audit_session)
@@ -815,7 +815,7 @@ def submit_penilaian_diri(request, session_id):
     
     if belum_terisi > 0:
         messages.error(request, f"Masih ada {belum_terisi} elemen yang belum dinilai. Silakan lengkapi semua penilaian terlebih dahulu.")
-        return redirect('ami:audit_session_detail', pk=session_id)
+        return redirect('ami:audit_session_list')
     
     # Ubah status penilaian diri menjadi 'DIAJUKAN'
     penilaian_diri.update(status='DIAJUKAN')
@@ -825,34 +825,49 @@ def submit_penilaian_diri(request, session_id):
     audit_session.save()
     
     messages.success(request, "Penilaian diri berhasil dikirim. Sesi audit sekarang dalam status 'Penilaian Auditor'.")
-    return redirect('ami:audit_session_detail', pk=session_id)
+    return redirect('ami:audit_session_list')
 
 # ----------------------------
 # Views untuk Audit
 # ----------------------------
 @login_required
+@login_required
 def audit_list(request, session_id):
     """View untuk menampilkan daftar hasil audit"""
     audit_session = get_object_or_404(AuditSession, pk=session_id)
-    
     # Periksa izin akses - hanya auditor yang ditunjuk yang bisa mengakses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
     
+    # Perbaikan: ganti indikator dengan elemen
     audit_items = Audit.objects.filter(
         penilaian_diri__audit_session=audit_session
     ).select_related(
         'penilaian_diri', 
-        'penilaian_diri__indikator',
-        'penilaian_diri__indikator__elemen',
+        'penilaian_diri__elemen',
+        'penilaian_diri__elemen__kriteria',
         'auditor'
-    ).order_by('penilaian_diri__indikator__kode')
+    ).order_by('penilaian_diri__elemen__kode')
+
+    grouped_data = {}
+    for ai in audit_items:
+        kriteria = ai.penilaian_diri.elemen.kriteria
+        if kriteria not in grouped_data:
+            grouped_data[kriteria] = []
+        grouped_data[kriteria].append(ai)
+    
+    # Hitung statistik
+    total_elemen = audit_items.count()
+    elemen_teraudit = audit_items.exclude(skor__isnull=True).count()
+    persentase_teraudit = (elemen_teraudit / total_elemen * 100) if total_elemen > 0 else 0
     
     context = {
         'audit_session': audit_session,
-        'audit_items': audit_items
+        'audit_items': audit_items,
+        'total_elemen': total_elemen,
+        'elemen_teraudit': elemen_teraudit,
+        'persentase_teraudit': persentase_teraudit
     }
-    
     return render(request, 'ami/audit_list.html', context)
 
 @login_required
@@ -861,28 +876,49 @@ def audit_update(request, pk):
     audit_item = get_object_or_404(Audit, pk=pk)
     penilaian_diri = audit_item.penilaian_diri
     audit_session = penilaian_diri.audit_session
+    
     # Periksa izin akses - hanya auditor yang ditunjuk yang bisa mengakses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengubah audit ini.")
+    
+    # Periksa apakah user adalah auditor
+    user_auditor = get_user_auditor(request.user)
+    if not user_auditor:
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengubah audit ini.")
+    
+    # Periksa status sesi audit
+    if audit_session.status != 'PENILAIAN_AUDITOR':
+        messages.error(request, "Audit hanya bisa dilakukan saat status sesi adalah 'Penilaian Auditor'.")
+        return redirect('ami:audit_session_detail', pk=audit_session.id)
+    
+    # Periksa apakah masih dalam rentang tanggal penilaian auditor
+    today = timezone.now().date()
+    if audit_session.tanggal_mulai_penilaian_auditor and audit_session.tanggal_selesai_penilaian_auditor:
+        if today < audit_session.tanggal_mulai_penilaian_auditor or today > audit_session.tanggal_selesai_penilaian_auditor:
+            messages.error(request, "Audit hanya bisa dilakukan dalam rentang tanggal penilaian auditor.")
+            return redirect('ami:audit_session_detail', pk=audit_session.id)
+    
     if request.method == 'POST':
         form = AuditForm(request.POST, instance=audit_item)
         if form.is_valid():
             audit = form.save(commit=False)
             # Set auditor ke user yang sedang login
-            user_auditor = get_user_auditor(request.user)
-            if user_auditor:
-                audit.auditor = user_auditor
+            audit.auditor = user_auditor
             audit.save()
             messages.success(request, 'Hasil audit berhasil diperbarui.')
             return redirect('ami:audit_list', session_id=audit_session.id)
     else:
         form = AuditForm(instance=audit_item)
-    return render(request, 'ami/audit_form.html', {
+    
+    context = {
         'form': form,
         'audit_session': audit_session,
         'penilaian_diri': penilaian_diri,
-        'title': f'Audit - {audit_session.program_studi} - {penilaian_diri.elemen.kode}'  # Perbaikan: ganti indikator dengan elemen
-    })
+        'title': f'Audit - {audit_session.program_studi} - {penilaian_diri.elemen.kode}'
+    }
+    return render(request, 'ami/audit_form.html', context)
+
+
 # ----------------------------
 # Views untuk Dokumen Pendukung
 # ----------------------------

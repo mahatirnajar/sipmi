@@ -96,7 +96,9 @@
                         
                         <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm font-medium">
                             <div class="flex flex-wrap gap-1">
-                                <a href="{% url 'ami:penilaian_diri_list' session.id %}" class="text-blue-600 hover:text-blue-900">Lihat</a>
+                                <a href="{% url 'ami:audit_list' session.id %}" class="text-blue-600 hover:text-blue-900">Audit</a>
+                                <span class="hidden md:inline">|</span>
+                                <a href="{% url 'ami:penilaian_diri_list' session.id %}" class="text-blue-600 hover:text-blue-900">Penilaian Diri</a>
                                 <span class="hidden md:inline">|</span>
                                 <a href="{% url 'ami:audit_session_update' session.id %}" class="text-blue-600 hover:text-blue-900">Edit</a>
                                 <span class="hidden md:inline">|</span>

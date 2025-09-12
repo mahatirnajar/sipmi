@@ -60,7 +60,7 @@ urlpatterns = [
     path('penilaian-diri/<int:session_id>/', views.penilaian_diri_list, name='penilaian_diri_list'),
     path('penilaian-diri/<int:session_id>/create/', views.penilaian_diri_create, name='penilaian_diri_create'),
     path('penilaian-diri/<int:pk>/edit/', views.penilaian_diri_update, name='penilaian_diri_update'),
-
+    path('penilaian-submit-penilaian-diri/<int:session_id>/', views.submit_penilaian_diri, name='submit_penilaian_diri'),
     # Audit
     path('audit/<int:session_id>/', views.audit_list, name='audit_list'),
     path('audit/<int:pk>/edit/', views.audit_update, name='audit_update'),
