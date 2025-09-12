@@ -164,6 +164,7 @@ class AuditSession(models.Model):
     ])
     tanggal_mulai_penilaian_mandiri = models.DateField(blank=True, null=True)
     tanggal_selesai_penilaian_mandiri = models.DateField(blank=True, null=True)
+    tanggal_mulai_penilaian_auditor = models.DateField(blank=True, null=True)
     tanggal_selesai_penilaian_auditor = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('DRAFT', 'Draft'),
@@ -217,7 +218,7 @@ class PenilaianDiri(models.Model):
     audit_session = models.ForeignKey(AuditSession, on_delete=models.CASCADE, related_name='penilaian_diri')
     elemen = models.ForeignKey(Elemen, on_delete=models.CASCADE, null=True)
     skor = models.FloatField(null=True, blank=True)
-    bukti_dokumen = models.URLField(blank=True, null=True)
+    bukti_dokumen = models.URLField(blank=True, null=True)  # Sudah menggunakan URLField
     komentar = models.TextField(blank=True, null=True)
     tanggal_penilaian = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[

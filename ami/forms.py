@@ -268,26 +268,25 @@ class AuditSessionForm(forms.ModelForm):
 class PenilaianDiriForm(forms.ModelForm):
     class Meta:
         model = PenilaianDiri
-        fields = ['skor', 'komentar']
+        fields = ['skor', 'bukti_dokumen', 'komentar']  # Menghapus elemen karena tidak perlu diubah
         widgets = {
-            # 'elemen': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'skor': forms.NumberInput(attrs={'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
-            'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
-            # 'status': forms.Select(attrs={'class': 'form-control'}),
+            'skor': forms.NumberInput(attrs={'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'}),
+            'bukti_dokumen': forms.URLInput(attrs={
+                'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500',
+                'placeholder': 'https://drive.google.com/...'
+            }),
+            'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'}),
         }
-
-    def clean_skor(self):
-        skor = self.cleaned_data.get('skor')
-        elemen = self.cleaned_data.get('elemen')
-        
-        if skor is not None and elemen:
-            if skor < 0:
-                raise forms.ValidationError("Skor tidak boleh kurang dari 0.")
-            if skor > elemen.skor_maksimal:
+    
+    def clean_bukti_dokumen(self):
+        url = self.cleaned_data.get('bukti_dokumen')
+        if url:
+            # Validasi minimal format URL Google Drive
+            if 'drive.google.com' not in url and 'docs.google.com' not in url:
                 raise forms.ValidationError(
-                    f"Skor tidak boleh melebihi {elemen.skor_maksimal} (skor maksimal untuk indikator ini)."
+                    "Harus berupa link Google Drive atau Google Docs yang valid"
                 )
-        return skor
+        return url
 
 class AuditForm(forms.ModelForm):
     class Meta:

@@ -682,9 +682,35 @@ def penilaian_diri_list(request, session_id):
             grouped_data[kriteria] = []
         grouped_data[kriteria].append(pd)
     
+
+    # Hitung statistik
+    total_indikator = len(penilaian_diri)
+    indikator_terisi = sum(1 for p in penilaian_diri if p.skor is not None)
+    persentase_terisi = (indikator_terisi / total_indikator * 100) if total_indikator > 0 else 0
+    
+    # Ambil data audit
+    audit_items = Audit.objects.filter(
+        penilaian_diri__in=penilaian_diri
+    ).select_related(
+        'auditor'
+    )
+    
+    # Hitung statistik audit
+    total_audit = audit_items.count()
+    audit_selesai = audit_items.exclude(skor__isnull=True).count()
+    persentase_audit = (audit_selesai / total_audit * 100) if total_audit > 0 else 0
+
+    
     context = {
         'audit_session': audit_session,
-        'grouped_data': grouped_data
+        'grouped_data': grouped_data,
+        'audit_items': audit_items,
+        'total_indikator': total_indikator,
+        'indikator_terisi': indikator_terisi,
+        'persentase_terisi': persentase_terisi,
+        'total_audit': total_audit,
+        'audit_selesai': audit_selesai,
+        'persentase_audit': persentase_audit,
     }
     return render(request, 'ami/penilaian_diri_list.html', context)
 
@@ -705,15 +731,15 @@ def penilaian_diri_create(request, session_id):
             penilaian.audit_session = audit_session
             penilaian.save()
             
-            # Jika ada file dokumen pendukung yang diunggah
-            if 'bukti_dokumen' in request.FILES:
-                dokumen = DokumenPendukung(
-                    penilaian_diri=penilaian,
-                    nama=f"Dokumen Pendukung {penilaian.indikator.kode}",
-                    file=request.FILES['bukti_dokumen'],
-                    deskripsi="Dokumen pendukung yang diunggah bersama penilaian"
-                )
-                dokumen.save()
+            # # Jika ada file dokumen pendukung yang diunggah
+            # if 'bukti_dokumen' in request.FILES:
+            #     dokumen = DokumenPendukung(
+            #         penilaian_diri=penilaian,
+            #         nama=f"Dokumen Pendukung {penilaian.indikator.kode}",
+            #         file=request.FILES['bukti_dokumen'],
+            #         deskripsi="Dokumen pendukung yang diunggah bersama penilaian"
+            #     )
+            #     dokumen.save()
                 
             messages.success(request, 'Penilaian diri berhasil disimpan.')
             return redirect('ami:penilaian_diri_list', session_id=session_id)
@@ -731,25 +757,24 @@ def penilaian_diri_update(request, pk):
     """View untuk memperbarui penilaian diri"""
     penilaian = get_object_or_404(PenilaianDiri, pk=pk)
     audit_session = penilaian.audit_session
-    
     # Periksa izin akses - hanya program studi yang bersangkutan yang bisa mengisi
     if not check_program_studi_permission(request.user, audit_session.program_studi):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengubah penilaian diri ini.")
     
-    # Periksa status sesi audit
-    if audit_session.status not in ['DRAFT', 'PENILAIAN_MANDIRI']:
-        messages.error(request, "Penilaian hanya bisa diubah saat status sesi adalah 'Draft' atau 'Penilaian Mandiri'.")
-        return redirect('ami:audit_session_detail', pk=audit_session.id)
+    # # Periksa status sesi audit
+    # if audit_session.status not in ['DRAFT', 'PENILAIAN_MANDIRI']:
+    #     messages.error(request, "Penilaian hanya bisa diubah saat status sesi adalah 'Draft' atau 'Penilaian Mandiri'.")
+    #     return redirect('ami:penilaian_diri_list', session_id=audit_session.id)
     
-    # Periksa apakah masih dalam rentang tanggal penilaian mandiri
-    today = timezone.now().date()
-    if audit_session.tanggal_mulai_penilaian_mandiri and audit_session.tanggal_selesai_penilaian_mandiri:
-        if today < audit_session.tanggal_mulai_penilaian_mandiri or today > audit_session.tanggal_selesai_penilaian_mandiri:
-            messages.error(request, "Penilaian hanya bisa diubah dalam rentang tanggal penilaian mandiri.")
-            return redirect('ami:audit_session_detail', pk=audit_session.id)
+    # # Periksa apakah masih dalam rentang tanggal penilaian mandiri
+    # today = timezone.now().date()
+    # if audit_session.tanggal_mulai_penilaian_mandiri and audit_session.tanggal_selesai_penilaian_mandiri:
+    #     if today < audit_session.tanggal_mulai_penilaian_mandiri or today > audit_session.tanggal_selesai_penilaian_mandiri:
+    #         messages.error(request, "Penilaian hanya bisa diubah dalam rentang tanggal penilaian mandiri.")
+    #         return redirect('ami:penilaian_diri_list', session_id=audit_session.id)
     
     if request.method == 'POST':
-        form = PenilaianDiriForm(request.POST, request.FILES, instance=penilaian)
+        form = PenilaianDiriForm(request.POST, instance=penilaian)
         if form.is_valid():
             penilaian = form.save()
             # Update status penilaian
@@ -757,25 +782,18 @@ def penilaian_diri_update(request, pk):
                 penilaian.status = 'TERISI'
                 penilaian.save()
             
-            # Jika ada file dokumen pendukung yang diunggah
-            if 'bukti_dokumen' in request.FILES:
-                dokumen = DokumenPendukung(
-                    penilaian_diri=penilaian,
-                    nama=f"Dokumen Pendukung {penilaian.elemen.kode}",
-                    file=request.FILES['bukti_dokumen'],
-                    deskripsi="Dokumen pendukung yang diunggah bersama penilaian"
-                )
-                dokumen.save()
             messages.success(request, 'Penilaian diri berhasil diperbarui.')
-            return redirect('ami:audit_session_detail', pk=audit_session.id)
+            return redirect('ami:penilaian_diri_list', session_id=audit_session.id)
     else:
         form = PenilaianDiriForm(instance=penilaian)
-    return render(request, 'ami/penilaian_diri_form.html', {
+    
+    context = {
         'form': form,
         'audit_session': audit_session,
+        'penilaian': penilaian,
         'title': f'Edit Penilaian Diri - {audit_session.program_studi}'
-    })
-
+    }
+    return render(request, 'ami/penilaian_diri_form.html', context)
 
 @login_required
 def submit_penilaian_diri(request, session_id):
