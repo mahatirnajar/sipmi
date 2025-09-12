@@ -291,12 +291,12 @@ class PenilaianDiriForm(forms.ModelForm):
 class AuditForm(forms.ModelForm):
     class Meta:
         model = Audit
-        fields = ['skor', 'deskripsi_kondisi', 'kategori_kondisi', 'komentar']
+        fields = ['skor', 'deskripsi_kondisi', 'kategori_kondisi']
         widgets = {
-            'skor': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '4', 'step': '0.01'}),
-            'deskripsi_kondisi': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'kategori_kondisi': forms.Select(attrs={'class': 'form-control'}),
-            'komentar': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'skor': forms.NumberInput(attrs={'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'}),
+            'deskripsi_kondisi': forms.Textarea(attrs={'rows': 10, 'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'}),
+            'kategori_kondisi': forms.Select(attrs={'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'}),
+            'komentar': forms.Textarea(attrs={'rows': 10, 'class': 'form-control mt-1 block w-full rounded-md border-black-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'}),
         }
 
 class DokumenPendukungForm(forms.ModelForm):

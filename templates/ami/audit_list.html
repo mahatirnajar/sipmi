@@ -39,9 +39,9 @@
                     </div>
                 </div>
             </div>
-            {{audit_items}}
+            
+            {% if grouped_data %}
             {% for kriteria, items in grouped_data.items %}
-            {{kriteria}}
             <div class="mb-6">
                 <h3 class="font-semibold text-lg mb-3 border-l-4 border-blue-500 pl-2">{{ kriteria.kode }} - {{ kriteria.nama }}</h3>
                 
@@ -161,6 +161,7 @@
                 <p class="mt-1 text-sm text-gray-500">Belum ada elemen yang didefinisikan untuk lembaga akreditasi ini.</p>
             </div>
             {% endfor %}
+            {% endif %}
         </div>
     </div>
     

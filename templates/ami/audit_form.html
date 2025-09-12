@@ -49,13 +49,13 @@
                     {% endif %}
                 </div>
                 
-                <div class="md:col-span-2">
+                {% comment %} <div class="md:col-span-2">
                     <label for="{{ form.komentar.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Komentar</label>
                     {{ form.komentar }}
                     {% if form.komentar.errors %}
                     <p class="mt-1 text-xs text-red-600">{{ form.komentar.errors|join:", " }}</p>
                     {% endif %}
-                </div>
+                </div> {% endcomment %}
             </div>
             
             <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-4 pt-4 border-t border-gray-200">

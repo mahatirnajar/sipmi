@@ -831,7 +831,6 @@ def submit_penilaian_diri(request, session_id):
 # Views untuk Audit
 # ----------------------------
 @login_required
-@login_required
 def audit_list(request, session_id):
     """View untuk menampilkan daftar hasil audit"""
     audit_session = get_object_or_404(AuditSession, pk=session_id)
@@ -839,35 +838,59 @@ def audit_list(request, session_id):
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
     
-    # Perbaikan: ganti indikator dengan elemen
-    audit_items = Audit.objects.filter(
-        penilaian_diri__audit_session=audit_session
-    ).select_related(
-        'penilaian_diri', 
-        'penilaian_diri__elemen',
-        'penilaian_diri__elemen__kriteria',
-        'auditor'
-    ).order_by('penilaian_diri__elemen__kode')
-
+    # Ambil semua elemen dari lembaga akreditasi prodi
+    lembaga = audit_session.program_studi.lembaga_akreditasi
+    semua_elemen = Elemen.objects.filter(
+        kriteria__lembaga_akreditasi=lembaga,
+        status='aktif'
+    ).order_by('kriteria__kode', 'kode')
+    
+    # Untuk setiap elemen, pastikan ada penilaian diri dan audit
     grouped_data = {}
-    for ai in audit_items:
-        kriteria = ai.penilaian_diri.elemen.kriteria
+    elemen_count = 0
+    elemen_teraudit = 0
+    
+    for elemen in semua_elemen:
+        elemen_count += 1
+        # Dapatkan atau buat penilaian diri
+        penilaian_diri, created = PenilaianDiri.objects.get_or_create(
+            audit_session=audit_session,
+            elemen=elemen,
+            defaults={
+                'status': 'BELUM'
+            }
+        )
+        
+        # Dapatkan atau buat hasil audit
+        audit, created = Audit.objects.get_or_create(
+            penilaian_diri=penilaian_diri
+        )
+        
+        # Cek apakah elemen sudah diaudit
+        if audit.skor is not None:
+            elemen_teraudit += 1
+        
+        # Kelompokkan berdasarkan kriteria
+        kriteria = elemen.kriteria
         if kriteria not in grouped_data:
             grouped_data[kriteria] = []
-        grouped_data[kriteria].append(ai)
+        grouped_data[kriteria].append({
+            'elemen': elemen,
+            'penilaian_diri': penilaian_diri,
+            'audit': audit
+        })
     
     # Hitung statistik
-    total_elemen = audit_items.count()
-    elemen_teraudit = audit_items.exclude(skor__isnull=True).count()
-    persentase_teraudit = (elemen_teraudit / total_elemen * 100) if total_elemen > 0 else 0
+    persentase_teraudit = (elemen_teraudit / elemen_count * 100) if elemen_count > 0 else 0
     
     context = {
         'audit_session': audit_session,
-        'audit_items': audit_items,
-        'total_elemen': total_elemen,
+        'grouped_data': grouped_data,
+        'total_elemen': elemen_count,
         'elemen_teraudit': elemen_teraudit,
         'persentase_teraudit': persentase_teraudit
     }
+    return render(request, 'ami/audit_list.html', context)
     return render(request, 'ami/audit_list.html', context)
 
 @login_required
