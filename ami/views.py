@@ -49,12 +49,12 @@ def get_user_program_studi(user):
     except AttributeError:
         return None
     
-def get_user_program_studi(user):
-    """Mendapatkan program studi yang terkait dengan user"""
-    try:
-        return user.programstudi
-    except AttributeError:
-        return None
+# def get_user_program_studi(user):
+#     """Mendapatkan program studi yang terkait dengan user"""
+#     try:
+#         return user.programstudi
+#     except AttributeError:
+#         return None
 
 def get_user_auditor(user):
     """Mendapatkan objek auditor yang terkait dengan user"""

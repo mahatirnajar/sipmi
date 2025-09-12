@@ -60,7 +60,7 @@
                     <i class="fas fa-tachometer-alt mr-3"></i>
                     <span>Dashboard</span>
                 </a>
-                
+                {% if user.is_staff %}
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Master Data</p>
                     <div class="mt-2 space-y-1">
@@ -78,7 +78,7 @@
                         </a>
                     </div>
                 </div>
-                
+                {% endif %}
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Audit Management</p>
                     <div class="mt-2 space-y-1">
@@ -96,7 +96,6 @@
                         </a> {% endcomment %}
                     </div>
                 </div>
-                
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Laporan</p>
                     <div class="mt-2 space-y-1">
@@ -104,7 +103,7 @@
                             <i class="fas fa-lightbulb mr-3"></i>
                             <span>Rekomendasi</span>
                         </a>
-                        <a href="{% url 'ami:audit_session_list' %}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'audit_session_list' %}bg-blue-50 text-blue-600{% else %}hover:bg-gray-50{% endif %}">
+                        <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-50">
                             <i class="fas fa-file-alt mr-3"></i>
                             <span>Laporan Audit</span>
                         </a>
