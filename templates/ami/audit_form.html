@@ -48,6 +48,23 @@
                         {{ penilaian_diri.elemen.panduan|linebreaks }}
                     </div>
                 </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="panduan">
+                        Dokumen Pendukung
+                    </label>
+               <div>
+                <span class="text-sm text-gray-600">Link Dokumen:</span>
+                    <p>
+                        {% if penilaian_diri.bukti_dokumen %}
+                        <a href="{{ penilaian_diri.bukti_dokumen }}" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">
+                            <i class="fas fa-link mr-1"></i> {{ penilaian_diri.bukti_dokumen }}
+                        </a>
+                        {% else %}
+                        <span class="text-gray-500">Tidak ada link</span>
+                        {% endif %}
+                    </p>
+            </div>
+                </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 <div>
