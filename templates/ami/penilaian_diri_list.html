@@ -15,9 +15,21 @@
         {% endfor %}
     </div>
     {% endif %}
+    
     <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4 lg:mb-6">
         <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Daftar Penilaian Diri</h3>
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Daftar Penilaian Diri</h3>
+                <div class="mt-3 lg:mt-0 flex space-x-2">
+                    <a href="{% url 'ami:audit_session_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1.5 rounded-lg flex items-center">
+                        <i class="fas fa-arrow-left mr-1.5"></i> Kembali
+                    </a>
+                    <a href="{% url 'ami:submit_penilaian_diri' audit_session.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center ml-2 lg:ml-0">
+                    <i class="fas fa-paper-plane mr-1.5"></i> Submit 
+                </a>
+
+                </div>
+            </div>
         </div>
         <div class="p-4 lg:p-6">
             <div class="mb-3 lg:mb-4 flex justify-between items-center">
@@ -26,91 +38,122 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
-                        <input type="text" id="search-penilaian" class="block w-full pl-10 pr-3 py-1.5 lg:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Cari indikator...">
+                        <input type="text" id="search-penilaian" class="block w-full pl-10 pr-3 py-1.5 lg:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Cari elemen...">
                     </div>
                 </div>
-                <a href="{% url 'ami:submit_penilaian_diri' audit_session.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center ml-2 lg:ml-0">
-                    <i class="fas fa-paper-plane mr-1.5"></i> Submit 
-                </a>
             </div>
-            <div class="space-y-3 lg:space-y-4">
-    {% for kriteria, penilaian_list in grouped_data.items %}
-    <div>
-        <h3 class="font-semibold text-lg mb-2 border-l-4 border-blue-500 pl-2">{{ kriteria.kode }} - {{ kriteria.nama }}</h3>
-        {% for penilaian in penilaian_list %}
-        <div class="border rounded-lg p-3 lg:p-4 hover:bg-gray-50 transition-colors mb-2 last:mb-0">
-            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start">
-                <div class="lg:mr-4 mb-2 lg:mb-0">
-                    <h4 class="font-medium text-gray-900">{{ penilaian.elemen.kode }} - {{ penilaian.elemen.nama }}</h4>
-                    <p class="text-xs lg:text-sm text-gray-500 mt-1">{{ penilaian.elemen.deskripsi|truncatechars:50 }}</p>
-                    <div class="mt-2 flex flex-wrap items-center space-x-2">
-                        <span class="text-xs">
-                            <span class="font-medium">Skor:</span> 
-                            {% if penilaian.skor is not None %}
-                            <span class="px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{{ penilaian.skor }}</span>
-                            {% else %}
-                            <span class="text-gray-500">Belum diisi</span>
-                            {% endif %}
-                        </span>
+            
+            {% if grouped_data %}
+            {% for kriteria, penilaian_list in grouped_data.items %}
+            <div class="mb-6">
+                <h3 class="font-semibold text-lg mb-3 border-l-4 border-blue-500 pl-2">{{ kriteria.kode }} - {{ kriteria.nama }}</h3>
+                
+                {% for penilaian in penilaian_list %}
+                <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors mb-3 last:mb-0">
+                    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start">
+                        <div class="lg:mr-4 mb-2 lg:mb-0">
+                            <!-- Informasi elemen -->
+                            <h4 class="font-medium text-gray-900">{{ penilaian.elemen.kode }} - {{ penilaian.elemen.nama }}</h4>
+                            <p class="text-sm text-gray-500 mt-1">{{ penilaian.elemen.deskripsi|truncatechars:100 }}</p>
+                            
+                            <!-- Deskripsi dan panduan -->
+                            <div class="mt-3 bg-gray-50 p-3 rounded-md border border-gray-200">
+                                <h5 class="font-medium text-gray-800 mb-2">Deskripsi Elemen:</h5>
+                                <p class="text-gray-700 mb-3">{{ penilaian.elemen.deskripsi }}</p>
+                                
+                            </div>
+                            
+                            <!-- Hasil penilaian diri -->
+                            <div class="mt-3">
+                                <h5 class="font-medium text-gray-800 mb-2">Penilaian Diri:</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <span class="text-sm text-gray-600">Skor:</span>
+                                        <p class="font-medium">
+                                            {% if penilaian.skor is not None %}
+                                            {{ penilaian.skor|floatformat:2 }} / {{ penilaian.elemen.skor_maksimal }}
+                                            {% else %}
+                                            <span class="text-gray-500">Belum diisi</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-600">Link Dokumen:</span>
+                                        <p>
+                                            {% if penilaian.bukti_dokumen %}
+                                            <a href="{{ penilaian.bukti_dokumen }}" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">
+                                                <i class="fas fa-link mr-1"></i> Lihat Dokumen
+                                            </a>
+                                            {% else %}
+                                            <span class="text-gray-500">Tidak ada link</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-600">Komentar:</span>
+                                        <p>
+                                            {% if penilaian.komentar %}
+                                            {{ penilaian.komentar|truncatechars:50 }}
+                                            {% else %}
+                                            <span class="text-gray-500">-</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 mt-2 lg:mt-0">
+                            <a href="{% url 'ami:penilaian_diri_update' penilaian.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-edit text-lg"></i>
+                            </a>
+                        </div>
                     </div>
-                    {% if penilaian.komentar %}
-                    <p class="text-xs lg:text-sm text-gray-700 mt-2">
-                        <span class="font-medium">Komentar:</span> {{ penilaian.komentar }}
-                    </p>
-                    {% endif %}
                 </div>
-                <div class="flex space-x-2 mt-2 lg:mt-0">
-                    <a href="{% url 'ami:penilaian_diri_update' penilaian.id %}" class="text-blue-600 hover:text-blue-900">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                </div>
+                {% endfor %}
             </div>
-        </div>
-        {% empty %}
-        <div class="text-center py-8 bg-gray-50 rounded-lg">
-            ...
-        </div>
-        {% endfor %}
-    </div>
-    {% empty %}
-    <div class="text-center py-8 bg-gray-50 rounded-lg">
-        ...
-    </div>
-    {% endfor %}
-</div>
+            {% empty %}
+            <div class="text-center py-8 bg-gray-50 rounded-lg">
+                <i class="fas fa-clipboard-list text-3xl text-gray-300 mb-3"></i>
+                <h3 class="text-base font-medium text-gray-900">Tidak ada elemen untuk penilaian diri</h3>
+                <p class="mt-1 text-sm text-gray-500">Belum ada elemen yang didefinisikan untuk lembaga akreditasi ini.</p>
+            </div>
+            {% endfor %}
+            {% endif %}
         </div>
     </div>
+    
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Statistik Penilaian</h3>
+            <h3 class="text-lg font-semibold text-gray-900">Statistik Penilaian Diri</h3>
         </div>
         <div class="p-4 lg:p-6">
-            <div class="space-y-3 lg:space-y-4">
-                <div class="flex items-center justify-between">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                        <p class="text-xs lg:text-sm text-gray-500">Total Indikator</p>
-                        <p class="text-xl font-bold text-gray-900">{{ total_indikator }}</p>
+                        <p class="text-sm text-gray-500">Total Elemen</p>
+                        <p class="text-xl font-bold text-gray-900">{{ total_elemen }}</p>
                     </div>
-                    <i class="fas fa-list text-xl lg:text-2xl text-blue-500"></i>
+                    <i class="fas fa-list text-2xl text-blue-500"></i>
                 </div>
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                        <p class="text-xs lg:text-sm text-gray-500">Indikator Terisi</p>
-                        <p class="text-xl font-bold text-gray-900">{{ indikator_terisi }}</p>
+                        <p class="text-sm text-gray-500">Elemen Terisi</p>
+                        <p class="text-xl font-bold text-gray-900">{{ elemen_terisi }}</p>
                     </div>
-                    <i class="fas fa-check-circle text-xl lg:text-2xl text-green-500"></i>
+                    <i class="fas fa-check-circle text-2xl text-green-500"></i>
                 </div>
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                        <p class="text-xs lg:text-sm text-gray-500">Persentase</p>
+                        <p class="text-sm text-gray-500">Persentase</p>
                         <p class="text-xl font-bold text-gray-900">{{ persentase_terisi|floatformat:1 }}%</p>
                     </div>
-                    <i class="fas fa-chart-pie text-xl lg:text-2xl text-purple-500"></i>
+                    <i class="fas fa-chart-pie text-2xl text-purple-500"></i>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% block scripts %}
 {{ block.super }}
 <script>

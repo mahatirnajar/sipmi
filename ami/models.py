@@ -254,7 +254,7 @@ class Audit(models.Model):
     """Model untuk hasil audit yang dilakukan oleh auditor"""
     penilaian_diri = models.OneToOneField(PenilaianDiri, on_delete=models.CASCADE, related_name='audit')
     skor = models.FloatField(null=True, blank=True)
-    deskripsi_kondisi = models.TextField(blank=True, null=True)
+    deskripsi_kondisi = models.TextField(default="Tolong Tuliskan Deskrpisi Penilaian")
     kategori_kondisi = models.CharField(max_length=20, choices=KategoriKondisi.choices, blank=True, null=True)
     komentar = models.TextField(blank=True, null=True)
     tanggal_audit = models.DateTimeField(auto_now_add=True)

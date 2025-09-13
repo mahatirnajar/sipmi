@@ -663,54 +663,54 @@ def audit_session_delete(request, pk):
 # ----------------------------
 @login_required
 def penilaian_diri_list(request, session_id):
+    """View untuk menampilkan daftar penilaian diri"""
     audit_session = get_object_or_404(AuditSession, pk=session_id)
+    # Periksa izin akses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses halaman ini.")
     
-    # Kelompokkan penilaian diri berdasarkan kriteria
-    penilaian_diri = PenilaianDiri.objects.filter(
-        audit_session=audit_session
-    ).select_related(
-        'elemen', 'elemen__kriteria'
-    ).order_by('elemen__kriteria__kode', 'elemen__kode')
+    # Ambil semua elemen dari lembaga akreditasi prodi
+    lembaga = audit_session.program_studi.lembaga_akreditasi
+    semua_elemen = Elemen.objects.filter(
+        kriteria__lembaga_akreditasi=lembaga,
+        status='aktif'
+    ).order_by('kriteria__kode', 'kode')
     
-    # Susun ulang data menjadi dictionary {kriteria: [daftar_penilaian]}
+    # Untuk setiap elemen, pastikan ada penilaian diri
     grouped_data = {}
-    for pd in penilaian_diri:
-        kriteria = pd.elemen.kriteria
+    elemen_count = 0
+    elemen_terisi = 0
+    
+    for elemen in semua_elemen:
+        elemen_count += 1
+        # Dapatkan atau buat penilaian diri
+        penilaian, created = PenilaianDiri.objects.get_or_create(
+            audit_session=audit_session,
+            elemen=elemen,
+            defaults={
+                'status': 'BELUM'
+            }
+        )
+        
+        # Cek apakah elemen sudah terisi
+        if penilaian.skor is not None:
+            elemen_terisi += 1
+        
+        # Kelompokkan berdasarkan kriteria
+        kriteria = elemen.kriteria
         if kriteria not in grouped_data:
             grouped_data[kriteria] = []
-        grouped_data[kriteria].append(pd)
+        grouped_data[kriteria].append(penilaian)
     
-
     # Hitung statistik
-    total_indikator = len(penilaian_diri)
-    indikator_terisi = sum(1 for p in penilaian_diri if p.skor is not None)
-    persentase_terisi = (indikator_terisi / total_indikator * 100) if total_indikator > 0 else 0
-    
-    # Ambil data audit
-    audit_items = Audit.objects.filter(
-        penilaian_diri__in=penilaian_diri
-    ).select_related(
-        'auditor'
-    )
-    
-    # Hitung statistik audit
-    total_audit = audit_items.count()
-    audit_selesai = audit_items.exclude(skor__isnull=True).count()
-    persentase_audit = (audit_selesai / total_audit * 100) if total_audit > 0 else 0
-
+    persentase_terisi = (elemen_terisi / elemen_count * 100) if elemen_count > 0 else 0
     
     context = {
         'audit_session': audit_session,
         'grouped_data': grouped_data,
-        'audit_items': audit_items,
-        'total_indikator': total_indikator,
-        'indikator_terisi': indikator_terisi,
-        'persentase_terisi': persentase_terisi,
-        'total_audit': total_audit,
-        'audit_selesai': audit_selesai,
-        'persentase_audit': persentase_audit,
+        'total_elemen': elemen_count,
+        'elemen_terisi': elemen_terisi,
+        'persentase_terisi': persentase_terisi
     }
     return render(request, 'ami/penilaian_diri_list.html', context)
 
@@ -891,7 +891,6 @@ def audit_list(request, session_id):
         'persentase_teraudit': persentase_teraudit
     }
     return render(request, 'ami/audit_list.html', context)
-    return render(request, 'ami/audit_list.html', context)
 
 @login_required
 def audit_update(request, pk):
@@ -912,14 +911,14 @@ def audit_update(request, pk):
     # Periksa status sesi audit
     if audit_session.status != 'PENILAIAN_AUDITOR':
         messages.error(request, "Audit hanya bisa dilakukan saat status sesi adalah 'Penilaian Auditor'.")
-        return redirect('ami:audit_session_detail', pk=audit_session.id)
+        return redirect('ami:audit_list', session_id=audit_session.id)
     
     # Periksa apakah masih dalam rentang tanggal penilaian auditor
     today = timezone.now().date()
     if audit_session.tanggal_mulai_penilaian_auditor and audit_session.tanggal_selesai_penilaian_auditor:
         if today < audit_session.tanggal_mulai_penilaian_auditor or today > audit_session.tanggal_selesai_penilaian_auditor:
             messages.error(request, "Audit hanya bisa dilakukan dalam rentang tanggal penilaian auditor.")
-            return redirect('ami:audit_session_detail', pk=audit_session.id)
+            return redirect('ami:audit_list', session_id=audit_session.id)
     
     if request.method == 'POST':
         form = AuditForm(request.POST, instance=audit_item)
