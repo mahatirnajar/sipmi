@@ -250,7 +250,7 @@ class AuditSessionForm(forms.ModelForm):
         fields = [
             'program_studi', 'tahun_akademik', 'semester',
             'tanggal_mulai_penilaian_mandiri', 'tanggal_selesai_penilaian_mandiri',
-            'tanggal_selesai_penilaian_auditor', 'status',
+            'tanggal_mulai_penilaian_auditor', 'tanggal_selesai_penilaian_auditor', 'status',
             'auditor_ketua', 'auditor_anggota'
         ]
         widgets = {
@@ -259,6 +259,7 @@ class AuditSessionForm(forms.ModelForm):
             'semester': forms.Select(attrs={'class': 'form-control'}),
             'tanggal_mulai_penilaian_mandiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'tanggal_selesai_penilaian_mandiri': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'tanggal_mulai_penilaian_auditor': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'tanggal_selesai_penilaian_auditor': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'auditor_ketua': forms.Select(),  # akan diatur di __init__
