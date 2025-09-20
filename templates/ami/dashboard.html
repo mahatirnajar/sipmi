@@ -134,10 +134,10 @@
                         <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
                             <div class="text-xs lg:text-sm font-medium text-gray-900">{{ session.program_studi.nama }}</div>
                             <div class="text-xs text-gray-500">{{ session.program_studi.jenjang }} - {{ session.program_studi.akreditasi }}</div>
-                            <div class="text-xs text-gray-500 sm:hidden">{{ session.tahun_akademik }} Semester {{ session.semester }}</div>
+                            <div class="text-xs text-gray-500 sm:hidden">{{ session.tahun_akademik }} Semester {{ session.get_semester_display }}</div>
                         </td>
                         <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900 hidden sm:table-cell">
-                            {{ session.tahun_akademik }} Semester {{ session.semester }}
+                            {{ session.tahun_akademik }} Semester {{ session.get_semester_display }}
                         </td>
                         <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-gray-900 hidden md:table-cell">
                             {% if session.auditor_ketua %}
