@@ -529,6 +529,14 @@ def audit_session_list(request):
     program_studi_id = request.GET.get('program_studi')
     if program_studi_id:
         audit_session_list = audit_session_list.filter(program_studi_id=program_studi_id)
+
+    # Filter berdasarkan Lembaga Akreditasi
+    lembaga = request.GET.get('lembaga')
+    if lembaga:
+        audit_session_list = audit_session_list.filter(program_studi_id__lembaga_akreditasi=lembaga)
+        
+
+
     
     # Urutkan
     audit_session_list = audit_session_list.order_by('-tanggal_mulai_penilaian_mandiri')
@@ -540,12 +548,15 @@ def audit_session_list(request):
     
     # Ambil semua program studi untuk filter
     program_studi = ProgramStudi.objects.all().order_by('nama')
+    lembaga = LembagaAkreditasi.objects.all().order_by('nama')
+
     
     return render(request, 'ami/audit_session_list.html', {
         'audit_sessions': audit_sessions,
         'program_studi': program_studi,
         'user_program_studi': user_program_studi,
-        'user_auditor': user_auditor
+        'user_auditor': user_auditor,
+        'lembaga': lembaga
     })
 
 @login_required
