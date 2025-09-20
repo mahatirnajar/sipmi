@@ -1041,6 +1041,7 @@ def rekomendasi_tindak_lanjut_update(request, pk):
         'title': f'Update Tindak Lanjut - {audit_session.program_studi}'
     })
 
+
 # ----------------------------
 # View untuk Laporan auditi
 # ----------------------------
@@ -1123,7 +1124,7 @@ def laporan_index_audit(request):
         elif user_auditor:
             qs = qs.filter(Q(auditor_ketua=user_auditor) | Q(auditor_anggota=user_auditor)).distinct()
 
-    # (opsional) filter by program studi dari querystring ?program_studi=ID
+   
     program_studi_id = request.GET.get('program_studi')
     if program_studi_id:
         qs = qs.filter(program_studi_id=program_studi_id)
