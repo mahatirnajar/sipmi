@@ -1042,7 +1042,7 @@ def rekomendasi_tindak_lanjut_update(request, pk):
     })
 
 # ----------------------------
-# View untuk Laporan
+# View untuk Laporan auditi
 # ----------------------------
 @login_required
 def laporan_audit(request, session_id):
@@ -1105,6 +1105,94 @@ def laporan_audit(request, session_id):
         'skor_akhir': skor_akhir,
     }
     return render(request, 'ami/laporan_audit.html', context)
+
+
+
+@login_required
+def laporan_index_audit(request):
+    """Index daftar sesi audit untuk melihat laporan"""
+    user_program_studi = get_user_program_studi(request.user)
+    user_auditor = get_user_auditor(request.user)
+
+    qs = AuditSession.objects.select_related('program_studi', 'auditor_ketua')\
+        .prefetch_related('auditor_anggota').all()
+
+    if not request.user.is_superuser:
+        if user_program_studi:
+            qs = qs.filter(program_studi=user_program_studi)
+        elif user_auditor:
+            qs = qs.filter(Q(auditor_ketua=user_auditor) | Q(auditor_anggota=user_auditor)).distinct()
+
+    # (opsional) filter by program studi dari querystring ?program_studi=ID
+    program_studi_id = request.GET.get('program_studi')
+    if program_studi_id:
+        qs = qs.filter(program_studi_id=program_studi_id)
+
+    qs = qs.order_by('-tanggal_mulai_penilaian_mandiri')
+
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get('page')
+    audit_sessions = paginator.get_page(page_number)
+
+    programs = ProgramStudi.objects.all().order_by('nama')
+
+    return render(request, 'ami/laporan_index_audit.html', {
+        'audit_sessions': audit_sessions,
+        'program_studi': programs,
+        'user_program_studi': user_program_studi,
+        'user_auditor': user_auditor
+    })
+
+@login_required
+def laporan_audit(request, session_id):
+    audit_session = get_object_or_404(AuditSession, pk=session_id)
+
+    if not check_audit_session_permission(request.user, audit_session):
+        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses laporan ini.")
+
+    penilaian_diri_list = PenilaianDiri.objects.filter(
+        audit_session=audit_session
+    ).select_related("elemen", "elemen__kriteria").prefetch_related("dokumen_pendukung")
+
+    # --- Hitung skor per kriteria untuk tabel ---
+    kriteria_scores = []
+    kriteria_list = audit_session.program_studi.lembaga_akreditasi.kriteria.all()
+    for kriteria in kriteria_list:
+        total_skor, count = 0, 0
+        for elemen in kriteria.elemen.all():
+            try:
+                penilaian = PenilaianDiri.objects.get(audit_session=audit_session, elemen=elemen)
+                if penilaian.skor is not None:
+                    total_skor += float(penilaian.skor)
+                    count += 1
+            except PenilaianDiri.DoesNotExist:
+                pass
+        if count > 0:
+            kriteria_scores.append({
+                "kriteria": kriteria,
+                "rata_rata": round(total_skor / count, 2),
+                "count": count,
+            })
+
+    total_skor = sum(item["rata_rata"] * item["count"] for item in kriteria_scores)
+    total_count = sum(item["count"] for item in kriteria_scores)
+    skor_akhir = round(total_skor / total_count, 2) if total_count > 0 else 0
+
+    # --- Data Radar Chart (hanya Penilaian Diri) ---
+    radar_labels, radar_pd = [], []
+    for item in kriteria_scores:
+        radar_labels.append(item["kriteria"].nama)
+        radar_pd.append(item["rata_rata"])
+
+    context = {
+        "audit_session": audit_session,
+        "penilaian_diri_list": penilaian_diri_list,
+        "kriteria_scores": kriteria_scores,
+        "skor_akhir": skor_akhir,
+        "radar_labels": radar_labels,
+        "radar_pd": radar_pd,
+    }
+    return render(request, "ami/laporan_audit.html", context)
 
 
 # ----------------------------

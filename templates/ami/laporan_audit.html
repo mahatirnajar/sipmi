@@ -1,229 +1,251 @@
-
 {% extends 'base.html' %}
-{% load static %}
+{% load static custom_filters %}
 
 {% block title %}Laporan Audit - {{ audit_session.program_studi.nama }} | Sistem Audit Mutu Internal{% endblock %}
 {% block page_title %}Laporan Audit{% endblock %}
-{% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.semester }}){% endblock %}
-{% block mobile_title %}Laporan Audit 2% endblock %}
+{% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}){% endblock %}
+{% block mobile_title %}Laporan Audit{% endblock %}
 
 {% block content %}
+
+<!-- PRINT STYLES 
+<style>
+@media print {
+  .print\:hidden { display: none !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  @page { size: A4; margin: 18mm 14mm; }
+  .no-break { page-break-inside: avoid; break-inside: avoid; }
+  .ttd-space { height: 80px !important; }
+  .ttd-line { width: 56mm; border-top: 1.5px solid #9ca3af; margin: 8px auto 0; }
+  .print\:text-xs { font-size: 11px !important; }
+  .print\:text-sm { font-size: 12px !important; }
+}
+</style>-->
+
 <div class="p-4 lg:p-6 bg-gray-50">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header Laporan -->
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8 mb-4 lg:mb-8">
-            <div class="text-center">
-                <div class="flex justify-center mb-3 lg:mb-4">
-                    <div class="bg-blue-100 p-2 lg:p-3 rounded-full">
-                        <i class="fas fa-university text-blue-600 text-2xl lg:text-3xl"></i>
-                    </div>
-                </div>
-                <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1 lg:mb-2">Laporan Audit Mutu Internal</h1>
-                <h2 class="text-lg lg:text-xl font-semibold text-gray-700 mb-3 lg:mb-6">{{ audit_session.program_studi.nama }}</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4 mb-4 lg:mb-6">
-                    <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
-                        <p class="text-xs lg:text-sm text-gray-500">Program Studi</p>
-                        <p class="font-medium">{{ audit_session.program_studi.nama }}</p>
-                    </div>
-                    <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
-                        <p class="text-xs lg:text-sm text-gray-500">Periode</p>
-                        <p class="font-medium">{{ audit_session.tahun_akademik }} Semester {{ audit_session.semester }}</p>
-                    </div>
-                    <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
-                        <p class="text-xs lg:text-sm text-gray-500">Tanggal</p>
-                        <p class="font-medium">{{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d F Y" }} - {{ audit_session.tanggal_selesai|date:"d F Y" }}</p>
-                    </div>
-                </div>
-                
-                <div class="mt-4 lg:mt-6">
-                    <div class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 bg-green-100 text-green-800 rounded-full">
-                        <i class="fas fa-star mr-1.5 lg:mr-2"></i>
-                        <span class="font-bold text-lg lg:text-xl">{{ skor_akhir }}</span>
-                        <span class="ml-1.5 lg:ml-2">Skor Akhir</span>
-                    </div>
-                </div>
-            </div>
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Tombol Cetak (hanya layar)
+    <div class="print:hidden flex justify-end mb-3">
+      <button onclick="window.print()" class="px-3 py-2 bg-blue-600 text-white rounded text-sm">
+        Cetak
+      </button>
+    </div> -->
+
+    <!-- Header Laporan -->
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8 mb-4 lg:mb-8">
+      <div class="text-center">
+        <div class="flex justify-center mb-3 lg:mb-4">
+          <div class="bg-blue-100 p-2 lg:p-3 rounded-full">
+            <i class="fas fa-university text-blue-600 text-2xl lg:text-3xl"></i>
+          </div>
         </div>
-        
-        <!-- Ringkasan Eksekutif -->
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
-            <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Ringkasan Eksekutif</h2>
-            <div class="space-y-3 lg:space-y-4">
-                <div class="bg-blue-50 p-3 lg:p-4 rounded-lg">
-                    <h3 class="font-semibold text-blue-800 mb-1.5 lg:mb-2">Kinerja Keseluruhan</h3>
-                    <p class="text-gray-700 text-sm lg:text-base">Program Studi {{ audit_session.program_studi.nama }} mencapai skor akhir sebesar <strong>{{ skor_akhir }}</strong> dari skala 0-4. Skor ini menggambarkan kinerja keseluruhan program studi berdasarkan penilaian terhadap seluruh kriteria dan indikator yang ditetapkan.</p>
-                </div>
-                
-                <div class="grid grid-cols-1 gap-3 lg:gap-4">
-                    <div class="bg-green-50 p-3 lg:p-4 rounded-lg">
-                        <h3 class="font-semibold text-green-800 mb-1.5 lg:mb-2">Kekuatan Utama</h3>
-                        <ul class="list-disc pl-5 space-y-1 text-gray-700 text-sm lg:text-base">
-                            <li>Kinerja sangat baik pada kriteria manajemen kurikulum</li>
-                            <li>Pelaksanaan penelitian dan pengabdian masyarakat yang konsisten</li>
-                            <li>Kepuasan mahasiswa yang tinggi terhadap layanan akademik</li>
-                        </ul>
-                    </div>
-                    <div class="bg-yellow-50 p-3 lg:p-4 rounded-lg">
-                        <h3 class="font-semibold text-yellow-800 mb-1.5 lg:mb-2">Area Perbaikan</h3>
-                        <ul class="list-disc pl-5 space-y-1 text-gray-700 text-sm lg:text-base">
-                            <li>Peningkatan infrastruktur laboratorium</li>
-                            <li>Peningkatan publikasi ilmiah dosen</li>
-                            <li>Penyempurnaan sistem penjaminan mutu internal</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+        <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1 lg:mb-2">Laporan Audit Mutu Internal</h1>
+        <h2 class="text-lg lg:text-xl font-semibold text-gray-700 mb-3 lg:mb-6">
+          {{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.nama }}
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4 mb-4 lg:mb-6">
+          <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
+            <p class="text-xs lg:text-sm text-gray-500">Program Studi</p>
+            <p class="font-medium">{{ audit_session.program_studi.nama }}</p>
+          </div>
+          <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
+            <p class="text-xs lg:text-sm text-gray-500">Periode</p>
+            <p class="font-medium">{{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}</p>
+          </div>
+          <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
+            <p class="text-xs lg:text-sm text-gray-500">Tanggal</p>
+            <p class="font-medium">
+              {{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d F Y" }}
+              -
+              {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d F Y" }}
+            </p>
+          </div>
         </div>
-        
-        <!-- Skor per Kriteria -->
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
-            <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Skor per Kriteria</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">No</th>
-                            <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Kriteria</th>
-                            <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Jumlah Indikator</th>
-                            <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Rata-rata Skor</th>
-                            <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for item in kriteria_scores %}
-                        <tr>
-                            <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">{{ forloop.counter }}</td>
-                            <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap">
-                                <div class="text-xs lg:text-sm font-medium text-gray-900">{{ item.kriteria.nama }}</div>
-                            </td>
-                            <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900 hidden md:table-cell">
-                                {{ item.count }}
-                            </td>
-                            <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
-                                <span class="font-medium">{{ item.rata_rata }}</span>
-                            </td>
-                            <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap">
-                                {% if item.rata_rata >= 3.5 %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-green-100 text-green-800">Sangat Baik</span>
-                                {% elif item.rata_rata >= 2.5 %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">Baik</span>
-                                {% elif item.rata_rata >= 1.5 %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">Cukup</span>
-                                {% else %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-red-100 text-red-800">Kurang</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+
+        <div class="mt-4 lg:mt-6">
+          <div class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 bg-green-100 text-green-800 rounded-full">
+            <i class="fas fa-star mr-1.5 lg:mr-2"></i>
+            <span class="font-bold text-lg lg:text-xl">{{ skor_akhir }}</span>
+            <span class="ml-1.5 lg:ml-2">Skor Akhir</span>
+          </div>
         </div>
-        
-        <!-- Detail Indikator -->
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
-            <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Detail Indikator</h2>
-            
-            {% for penilaian in penilaian_diri_list %}
-            <div class="mb-4 lg:mb-6 p-3 lg:p-4 bg-gray-50 rounded-lg">
-                <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-2">
-                    <h3 class="font-medium text-gray-900 text-sm lg:text-base">{{ penilaian.indikator.kode }} - {{ penilaian.indikator.nama }}</h3>
-                    <span class="px-1 py-0.5 lg:px-2 lg:py-1 bg-blue-100 text-blue-800 rounded text-xs lg:text-sm font-medium mt-1 lg:mt-0">
-                        Skor: {{ penilaian.skor|default:"-" }}
-                    </span>
-                </div>
-                <p class="text-xs lg:text-sm text-gray-600 mb-2">{{ penilaian.indikator.elemen.nama }} - {{ penilaian.indikator.elemen.kriteria.nama }}</p>
-                
-                <div class="mt-2 lg:mt-3">
-                    <p class="font-medium text-gray-700 text-xs lg:text-sm">Penilaian Diri:</p>
-                    <p class="text-xs lg:text-sm text-gray-600">{{ penilaian.komentar|default:"-" }}</p>
-                </div>
-                
-                {% if penilaian.audit %}
-                <div class="mt-2 lg:mt-3">
-                    <p class="font-medium text-gray-700 text-xs lg:text-sm">Hasil Audit:</p>
-                    <p class="text-xs lg:text-sm text-gray-600">{{ penilaian.audit.deskripsi_kondisi }}</p>
-                    <div class="mt-1.5 lg:mt-2 flex flex-wrap items-center space-x-2">
-                        <span class="text-xs px-1 py-0.5 lg:px-2 lg:py-1 bg-{{ penilaian.audit.kategori_kondisi|kategori_color }}-100 text-{{ penilaian.audit.kategori_kondisi|kategori_color }}-800 rounded">
-                            {{ penilaian.audit.get_kategori_kondisi_display }}
-                        </span>
-                        <span class="text-xs text-gray-500">Skor Audit: {{ penilaian.audit.skor }}</span>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if penilaian.dokumen_pendukung.all %}
-                <div class="mt-2 lg:mt-3">
-                    <p class="font-medium text-gray-700 text-xs lg:text-sm">Dokumen Pendukung:</p>
-                    <ul class="list-disc pl-5 mt-1">
-                        {% for dokumen in penilaian.dokumen_pendukung.all %}
-                        <li class="text-xs lg:text-sm text-blue-600 hover:text-blue-800">
-                            <a href="{{ dokumen.file.url }}" target="_blank" class="flex items-center">
-                                <i class="fas fa-file mr-1"></i> {{ dokumen.nama|truncatechars:30 }}
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        
-        <!-- Rekomendasi -->
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
-            <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Rekomendasi Tindak Lanjut</h2>
-            
-            <div class="space-y-3 lg:space-y-4">
-                <div class="bg-blue-50 p-3 lg:p-4 rounded-lg">
-                    <h3 class="font-semibold text-blue-800 mb-1.5 lg:mb-2">Peningkatan Infrastruktur Laboratorium</h3>
-                    <p class="text-gray-700 text-sm lg:text-base mb-2">Laboratorium perlu diperbarui dengan perangkat keras dan perangkat lunak terkini untuk mendukung pembelajaran yang lebih efektif.</p>
-                    <div class="flex flex-wrap items-center justify-between mt-1 lg:mt-2">
-                        <span class="text-xs px-1 py-0.5 lg:px-2 lg:py-1 bg-blue-100 text-blue-800 rounded">Prioritas: Tinggi</span>
-                        <span class="text-xs text-gray-500 mt-1 lg:mt-0">Tenggat Waktu: 31 Desember 2024</span>
-                    </div>
-                </div>
-                
-                <div class="bg-yellow-50 p-3 lg:p-4 rounded-lg">
-                    <h3 class="font-semibold text-yellow-800 mb-1.5 lg:mb-2">Peningkatan Publikasi Ilmiah Dosen</h3>
-                    <p class="text-gray-700 text-sm lg:text-base mb-2">Perlu adanya insentif dan pelatihan khusus untuk meningkatkan jumlah publikasi ilmiah dosen di jurnal bereputasi.</p>
-                    <div class="flex flex-wrap items-center justify-between mt-1 lg:mt-2">
-                        <span class="text-xs px-1 py-0.5 lg:px-2 lg:py-1 bg-yellow-100 text-yellow-800 rounded">Prioritas: Sedang</span>
-                        <span class="text-xs text-gray-500 mt-1 lg:mt-0">Tenggat Waktu: 30 Juni 2025</span>
-                    </div>
-                </div>
-                
-                <div class="bg-green-50 p-3 lg:p-4 rounded-lg">
-                    <h3 class="font-semibold text-green-800 mb-1.5 lg:mb-2">Penyempurnaan Sistem Penjaminan Mutu Internal</h3>
-                    <p class="text-gray-700 text-sm lg:text-base mb-2">Perlu penyempurnaan SOP dan pelatihan bagi tim penjaminan mutu untuk meningkatkan efektivitas sistem.</p>
-                    <div class="flex flex-wrap items-center justify-between mt-1 lg:mt-2">
-                        <span class="text-xs px-1 py-0.5 lg:px-2 lg:py-1 bg-green-100 text-green-800 rounded">Prioritas: Rendah</span>
-                        <span class="text-xs text-gray-500 mt-1 lg:mt-0">Tenggat Waktu: 31 Maret 2025</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tanda Tangan -->
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8">
-                <div>
-                    <p class="text-center text-gray-600 text-sm lg:text-base mb-4 lg:mb-12">Diperiksa Oleh,</p>
-                    <div class="text-center mt-8 lg:mt-16">
-                        <p class="font-bold text-gray-900 text-sm lg:text-base">Dr. Ahmad Syahid, M.Kom</p>
-                        <p class="text-gray-600 text-xs lg:text-sm">Ketua Tim Auditor</p>
-                    </div>
-                </div>
-                <div>
-                    <p class="text-center text-gray-600 text-sm lg:text-base mb-4 lg:mb-12">Disetujui Oleh,</p>
-                    <div class="text-center mt-8 lg:mt-16">
-                        <p class="font-bold text-gray-900 text-sm lg:text-base">Prof. Siti Nurhaliza, Ph.D</p>
-                        <p class="text-gray-600 text-xs lg:text-sm">Ketua Lembaga Penjaminan Mutu</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <!-- Skor per Kriteria -->
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
+      <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Skor per Kriteria</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">No</th>
+              <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Kriteria</th>
+              <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Jumlah Indikator</th>
+              <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Rata-rata Skor</th>
+              <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for item in kriteria_scores %}
+            <tr>
+              <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">{{ forloop.counter }}</td>
+              <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap">
+                <div class="text-xs lg:text-sm font-medium text-gray-900">{{ item.kriteria.nama }}</div>
+              </td>
+              <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900 hidden md:table-cell">
+                {{ item.count }}
+              </td>
+              <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
+                <span class="font-medium">{{ item.rata_rata }}</span>
+              </td>
+              <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap">
+                {% if item.rata_rata >= 3.5 %}
+                  <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-green-100 text-green-800">Sangat Baik</span>
+                {% elif item.rata_rata >= 2.5 %}
+                  <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">Baik</span>
+                {% elif item.rata_rata >= 1.5 %}
+                  <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">Cukup</span>
+                {% else %}
+                  <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-red-100 text-red-800">Kurang</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Radar Chart: Penilaian Diri per Kriteria -->
+<div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8 no-break">
+  <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3">Grafik Penilaian Diri</h2>
+  <div class="relative">
+    <canvas id="radarIndikator" height="320"></canvas>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4"></script>
+<script>
+(function () {
+  const labels = {{ radar_labels|safe }};
+  const dataPD = {{ radar_pd|safe }};
+  const ctx = document.getElementById('radarIndikator').getContext('2d');
+
+  const colorPD = 'rgba(59, 130, 246, 0.35)';   // biru transparan
+  const linePD  = 'rgba(59, 130, 246, 1)';
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Penilaian Diri',
+        data: dataPD,
+        fill: true,
+        backgroundColor: colorPD,
+        borderColor: linePD,
+        pointBackgroundColor: linePD,
+        pointBorderColor: '#fff',
+        pointHoverBorderColor: linePD
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        r: {
+          beginAtZero: true,
+          suggestedMin: 0,
+          suggestedMax: 4,
+          ticks: { stepSize: 1 },
+          angleLines: { color: 'rgba(156,163,175,.3)' },
+          grid: { color: 'rgba(156,163,175,.3)' },
+          pointLabels: { font: { size: 12 } }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+
+    <!-- Form Auditi (Nama & NIP) - layar saja -->
+    <form id="formAuditi" class="flex items-center flex-wrap gap-2 mb-6 print:hidden">
+      <label for="namaAuditi" class="text-sm">Koordinator Program Studi:</label>
+      <input type="text" id="namaAuditi" name="namaAuditi"
+             class="border rounded px-3 py-1 text-sm w-80"
+             placeholder="Nama Ketua Prodi">
+      <label for="nipAuditi" class="text-sm">NIP:</label>
+      <input type="text" id="nipAuditi" name="nipAuditi"
+             class="border rounded px-3 py-1 text-sm w-64"
+             placeholder="NIP Ketua Prodi">
+      <button type="button" onclick="applyAuditi()"
+              class="px-3 py-2 bg-blue-600 text-white text-sm rounded">
+        Terapkan
+      </button>
+    <!--   <button type="button" onclick="applyAuditi(); window.print();"
+              class="px-3 py-2 bg-gray-700 text-white text-sm rounded">
+        Terapkan & Cetak
+      </button>-->
+    </form>
+    <p class="text-xs text-gray-500 mb-6 print:hidden">
+      Silahkan mengisi AUDITI/Nama Ketua Program Studi, kemudian klik <b>Terapkan</b>.
+    </p>
+
+    <!-- Tanda Tangan -->
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8 no-break">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 text-center">
+
+        <!-- Auditi (Program Studi) -->
+        <div class="flex flex-col items-center justify-between">
+          <p class="text-gray-600 text-sm print:text-sm mb-2">
+            Auditi {{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.nama }}
+          </p>
+          <div class="h-24 ttd-space flex items-center justify-center"></div>
+          <div class="ttd-line"></div>
+          <p id="auditiNama" class="font-bold text-gray-900 mt-2 print:text-sm">................................</p>
+          <p id="auditiNip" class="text-gray-600 text-xs print:text-xs">NIP. ................................</p>
+        </div>
+
+        <!-- Ketua SPMI -->
+        <div class="flex flex-col items-center justify-between">
+          <p class="text-gray-600 text-sm print:text-sm mb-2">Ketua Pusat Penjaminan Mutu Internal</p>
+          <div class="h-24 ttd-space flex items-center justify-center"></div>
+          <div class="ttd-line"></div>
+          <p class="font-bold text-gray-900 mt-2 print:text-sm">Prof. Dr. Ir. Sakka Samudin, MP.</p>
+          <p class="text-gray-600 text-xs print:text-xs">NIP. ................................</p>
+        </div>
+
+        <!-- Ketua LPMPP -->
+        <div class="flex flex-col items-center justify-between">
+          <p class="text-gray-600 text-sm print:text-sm mb-2">
+            Ketua Lembaga Penjaminan Mutu dan Pengembangan Pembelajaran<br class="print:hidden">
+            Universitas Tadulako
+          </p>
+          <div class="h-24 ttd-space flex items-center justify-center"></div>
+          <div class="ttd-line"></div>
+          <p class="font-bold text-gray-900 mt-2 print:text-sm">Prof. Darmawati Darwis, M.Si., Ph.D</p>
+          <p class="text-gray-600 text-xs print:text-xs">NIP. ................................</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- JS apply -->
+    <script>
+      function applyAuditi() {
+        const nama = document.getElementById("namaAuditi").value || "................................";
+        const nip  = document.getElementById("nipAuditi").value  || "................................";
+        document.getElementById("auditiNama").innerText = nama;
+        document.getElementById("auditiNip").innerText  = "NIP. " + nip;
+      }
+    </script>
+
+  </div>
+</div>
+
 {% endblock %}

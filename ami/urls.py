@@ -73,6 +73,7 @@ urlpatterns = [
     path('rekomendasi/<int:session_id>/', views.rekomendasi_tindak_lanjut_list, name='rekomendasi_tindak_lanjut_list'),
     path('rekomendasi/<int:pk>/edit/', views.rekomendasi_tindak_lanjut_update, name='rekomendasi_tindak_lanjut_update'),
 
-    # Laporan Audit
-    path('laporan/<int:session_id>/', views.laporan_audit, name='laporan_audit'),
+   # Laporan Audit
+   path('laporan/', views.laporan_index_audit, name='laporan_index_audit'),
+   path('laporan/<int:session_id>/', views.laporan_audit, name='laporan_audit'),
 ]
