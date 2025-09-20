@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block title %}Laporan Auditor - {{ audit_session.program_studi.nama }} | AMI{% endblock %}
+{% block page_title %}Laporan Auditor{% endblock %}
+{% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}){% endblock %}
+{% block mobile_title %}Laporan Auditor{% endblock %}
+
+{% block content %}
+
+<style>
+@media print{
+  .print\:hidden{display:none!important}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  @page{size:A4;margin:18mm 14mm}
+  .no-break{page-break-inside:avoid;break-inside:avoid}
+  .ttd-space{height:80px!important}
+  .ttd-line{width:56mm;border-top:1.5px solid #9ca3af;margin:8px auto 0}
+  .print\:text-xs{font-size:11px!important}
+  .print\:text-sm{font-size:12px!important}
+}
+</style>
+
+<div class="p-4 lg:p-6 bg-gray-50">
+  <div class="max-w-5xl mx-auto">
+
+    <!-- Tombol cetak 
+    <div class="print:hidden flex justify-end mb-3">
+      <a href="{% url 'ami:laporan_index_auditor' %}" class="px-3 py-2 rounded text-sm border mr-2">Kembali</a>
+      <button onclick="window.print()" class="px-3 py-2 bg-blue-600 text-white rounded text-sm">Cetak</button>
+    </div>-->
+
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8 mb-4 lg:mb-8">
+      <div class="text-center">
+        <div class="flex justify-center mb-3 lg:mb-4">
+          <div class="bg-indigo-100 p-2 lg:p-3 rounded-full">
+            <i class="fas fa-user-check text-indigo-600 text-2xl lg:text-3xl"></i>
+          </div>
+        </div>
+        <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Laporan Tim Auditor</h1>
+        <h2 class="text-lg lg:text-xl font-semibold text-gray-700 mb-3">
+          {{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.nama }}
+        </h2>
+
+        <!-- Info periode -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4">
+          <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
+            <p class="text-xs lg:text-sm text-gray-500">Periode</p>
+            <p class="font-medium">{{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}</p>
+          </div>
+          <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
+            <p class="text-xs lg:text-sm text-gray-500">Tanggal</p>
+            <p class="font-medium">{{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d F Y" }} – {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d F Y" }}</p>
+          </div>
+          <div class="bg-gray-50 p-2 lg:p-3 rounded-lg">
+            <p class="text-xs lg:text-sm text-gray-500">Status</p>
+            <p class="font-medium">{{ audit_session.status }}</p>
+          </div>
+        </div>
+
+        <!-- Tim Auditor -->
+        <div class="mt-4">
+          <div class="inline-flex flex-col items-start bg-slate-50 rounded-lg p-3 lg:p-4 text-left">
+            <p class="text-sm text-slate-600"><span class="font-semibold">Ketua:</span> {{ audit_session.auditor_ketua.nama_lengkap }}{% if audit_session.auditor_ketua.nip %} (NIP {{ audit_session.auditor_ketua.nip }}){% endif %}</p>
+            <p class="text-sm text-slate-600 mt-1"><span class="font-semibold">Anggota:</span>
+              {% if audit_session.auditor_anggota.all %}
+                {% for a in audit_session.auditor_anggota.all %}
+                  {{ a.nama_lengkap }}{% if a.nip %} ({{ a.nip }}){% endif %}{% if not forloop.last %}; {% endif %}
+                {% empty %}-{% endfor %}
+              {% else %}-{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <!-- Ringkas temuan -->
+        <div class="flex flex-wrap gap-3 justify-center mt-5">
+          <div class="px-3 py-2 rounded-full bg-blue-100 text-blue-800 text-sm">Total Elemen: <b>{{ stats.total }}</b></div>
+          <!-- <div class="px-3 py-2 rounded-full bg-green-100 text-green-800 text-sm">Rata-rata skor audit: <b>{{ stats.avg_skor }}</b></div> -->
+          {% for k in stats.kategori %}
+            <div class="px-3 py-2 rounded-full text-sm {{ k.kategori_kondisi|kategori_color }}">
+              {{ k.kategori_kondisi|default:"-" }}: <b>{{ k.jumlah }}</b>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+
+
+
+<!-- Skor per Kriteria (Penilaian Auditor) -->
+<div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
+  <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">
+    Skor per Kriteria (Penilaian Auditor)
+  </h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">No</th>
+          <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Kriteria</th>
+          <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Jumlah Indikator</th>
+          <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Rata-rata Skor</th>
+          <th class="px-2 py-2 lg:px-6 lg:py-3 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for item in kriteria_scores_auditor %}
+        <tr>
+          <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">{{ forloop.counter }}</td>
+          <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap">
+            <div class="text-xs lg:text-sm font-medium text-gray-900">{{ item.nama }}</div>
+          </td>
+          <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900 hidden md:table-cell">
+            {{ item.jumlah }}
+          </td>
+          <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
+            <span class="font-medium">{{ item.rata_rata }}</span>
+          </td>
+          <td class="px-2 py-2 lg:px-6 lg:py-4 whitespace-nowrap">
+            {% if item.rata_rata >= 3.5 %}
+              <span class="px-2 py-1 text-xs lg:text-sm font-semibold rounded-full bg-green-100 text-green-800">Sangat Baik</span>
+            {% elif item.rata_rata >= 2.5 %}
+              <span class="px-2 py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">Baik</span>
+            {% elif item.rata_rata >= 1.5 %}
+              <span class="px-2 py-1 text-xs lg:text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">Cukup</span>
+            {% else %}
+              <span class="px-2 py-1 text-xs lg:text-sm font-semibold rounded-full bg-red-100 text-red-800">Kurang</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-6 text-center text-gray-500 text-sm">
+            Belum ada penilaian auditor pada sesi ini.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+    <!-- Tabel hasil audit -->
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
+      <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-3">Daftar Hasil Audit</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">No</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Elemen</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kriteria</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Skor PD</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Skor Audit</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kondisi (ringkas)</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Auditor</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for a in audits %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2 text-xs">{{ forloop.counter }}</td>
+
+              <!-- Elemen -->
+              <td class="px-3 py-2 text-xs font-medium">
+                {{ a.penilaian_diri.elemen.kode }} - {{ a.penilaian_diri.elemen.nama }}
+              </td>
+
+              <!-- Kriteria dari Elemen -->
+              <td class="px-3 py-2 text-xs">
+                {{ a.penilaian_diri.elemen.kriteria.nama }}
+              </td>
+
+              <td class="px-3 py-2 text-xs">{{ a.penilaian_diri.skor|default:"-" }}</td>
+              <td class="px-3 py-2 text-xs font-semibold">{{ a.skor|default:"-" }}</td>
+
+              <td class="px-3 py-2 text-xs">
+                <span class="inline-flex items-center px-2 py-1 rounded {{ a.kategori_kondisi|kategori_color }}">
+                  <i class="{{ a.kategori_kondisi|kategori_icon }} mr-1"></i>
+                  {{ a.get_kategori_kondisi_display|default:a.kategori_kondisi }}
+                </span>
+              </td>
+
+              <td class="px-3 py-2 text-xs text-gray-700">
+                {{ a.deskripsi_kondisi|default:"-"|truncatechars:120 }}
+              </td>
+
+              <td class="px-3 py-2 text-xs">{{ a.auditor.nama_lengkap }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="px-3 py-6 text-center text-sm text-gray-500">Belum ada hasil audit.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tanda tangan auditor -->
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8 no-break">
+      <h2 class="text-lg lg:text-xl font-bold text-gray-900 mb-4 text-center">Tanda Tangan</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 text-center">
+        <!-- Ketua -->
+        <div class="flex flex-col items-center justify-between">
+          <p class="text-gray-600 text-sm print:text-sm mb-2">Ketua Tim Auditor</p>
+          <div class="h-24 ttd-space flex items-center justify-center"></div>
+          <div class="ttd-line"></div>
+          <p class="font-bold text-gray-900 mt-2 print:text-sm">{{ audit_session.auditor_ketua.nama_lengkap }}</p>
+          <p class="text-gray-600 text-xs print:text-xs">NIP. {{ audit_session.auditor_ketua.nip|default:"................................" }}</p>
+        </div>
+
+        <!-- Auditor Anggota -->
+        <div class="flex flex-col items-center justify-between">
+          <p class="text-gray-600 text-sm print:text-sm mb-2">Auditor Anggota</p>
+          <div class="h-24 ttd-space flex items-center justify-center"></div>
+          <div class="ttd-line"></div>
+          {% if audit_session.auditor_anggota.all %}
+            {% for ag in audit_session.auditor_anggota.all %}
+              <p class="font-bold text-gray-900 mt-2 print:text-sm">{{ ag.nama_lengkap }}</p>
+              <p class="text-gray-600 text-xs print:text-xs -mt-1">NIP. {{ ag.nip|default:"................................" }}</p>
+              {% if not forloop.last %}<div class="h-2"></div>{% endif %}
+            {% empty %}
+              <p class="text-gray-600 text-xs print:text-xs">-</p>
+            {% endfor %}
+          {% else %}
+            <p class="text-gray-600 text-xs print:text-xs">-</p>
+          {% endif %}
+        </div>
+
+        <!-- Mengetahui (opsional) -->
+        <div class="flex flex-col items-center justify-between">
+          <p class="text-gray-600 text-sm print:text-sm mb-2">Mengetahui</p>
+          <div class="h-24 ttd-space flex items-center justify-center"></div>
+          <div class="ttd-line"></div>
+          <p class="font-bold text-gray-900 mt-2 print:text-sm">Ketua LPMPP</p>
+          <p class="text-gray-600 text-xs print:text-xs">NIP. ................................</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

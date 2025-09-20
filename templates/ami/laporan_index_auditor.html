@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Index Laporan Auditor | Sistem AMI{% endblock %}
+{% block page_title %}Laporan Auditor{% endblock %}
+{% block page_subtitle %}Daftar sesi audit yang ditugaskan kepada Anda{% endblock %}
+{% block mobile_title %}Laporan Auditor{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-6 bg-gray-50">
+    <h2 class="text-lg lg:text-xl font-bold text-gray-900">Daftar Sesi Auditor</h2>
+  <div class="max-w-8xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6">
+
+      <!-- Tabel -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th> 
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Studi</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periode</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Tanggal</th>
+             <!--- <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Peran Anda</th> -->
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for s in audit_sessions %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 whitespace-nowrap ">{{ forloop.counter }}</td>
+
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ s.program_studi.jenjang }} - {{ s.program_studi.nama }}
+                </div>
+                <div class="text-xs text-gray-500 md:hidden">
+                  {{ s.tahun_akademik }} • Semester {{ s.get_semester_display|default:s.semester }}
+                </div>
+              </td>
+
+              <td class="px-4 py-3 whitespace-nowrap">
+                {{ s.tahun_akademik }} • Semester {{ s.get_semester_display|default:s.semester }}
+              </td>
+
+              <td class="px-4 py-3 whitespace-nowrap text-gray-700 hidden md:table-cell">
+                {{ s.tanggal_mulai_penilaian_mandiri|date:"d M Y" }}
+                –
+                {{ s.tanggal_selesai|default:s.tanggal_selesai_penilaian_auditor|date:"d M Y" }}
+              </td>
+
+              <!-- <td class="px-3 py-2 text-xs hidden lg:table-cell">
+                {% if request.user.is_superuser %}
+                  (superuser)
+                {% else %}
+                  {% if s.auditor_ketua and s.auditor_ketua.user_id == request.user.id %}
+                    Ketua
+                  {% else %}
+                    Anggota
+                  {% endif %}
+                {% endif %}
+              </td> -->
+
+              
+<td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{{ s.status }}</span>
+            </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="flex flex-wrap gap-2">
+                  <a href="{% url 'ami:laporan_auditor' session_id=s.id %}"
+                     class="inline-flex items-center px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                    <i class="fas fa-user-check mr-1"></i> Lihat Laporan
+                  </a>
+                  {# Opsional: jika auditor juga perlu melihat versi Prodi #}
+                  {# <a href="{% url 'ami:laporan_audit' session_id=s.id %}" class="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border hover:bg-gray-50"><i class="fas fa-file-alt mr-1"></i> Laporan Prodi</a> #}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="px-3 py-8 text-center text-gray-500 text-sm">
+                Belum ada sesi audit yang ditugaskan kepada Anda.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if audit_sessions.has_other_pages %}
+      <div class="mt-4 flex items-center justify-center space-x-2">
+        {% if audit_sessions.has_previous %}
+          <a class="px-3 py-1 border rounded" href="?page={{ audit_sessions.previous_page_number }}{% if status_selected %}&status={{ status_selected }}{% endif %}{% if q %}&q={{ q }}{% endif %}">Prev</a>
+        {% endif %}
+        <span class="text-sm text-gray-600">
+          Halaman {{ audit_sessions.number }} dari {{ audit_sessions.paginator.num_pages }}
+        </span>
+        {% if audit_sessions.has_next %}
+          <a class="px-3 py-1 border rounded" href="?page={{ audit_sessions.next_page_number }}{% if status_selected %}&status={{ status_selected }}{% endif %}{% if q %}&q={{ q }}{% endif %}">Next</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1207,6 +1207,145 @@ def laporan_audit(request, session_id):
     return render(request, "ami/laporan_audit.html", context)
 
 
+#------------------------------
+#  VIEW UNTUK LAPORAN AUDITOR 
+#------------------------------
+from django.contrib.auth.decorators import login_required
+from django.db.models import Avg, Count
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, render
+from .models import AuditSession, Audit
+
+@login_required
+def laporan_auditor(request, session_id: int):
+    """
+    Laporan khusus untuk Tim Auditor pada suatu sesi.
+    Hanya auditor yang ditugaskan (ketua/anggota) atau superuser yang boleh akses.
+    """
+    session = get_object_or_404(
+        AuditSession.objects.select_related('program_studi', 'auditor_ketua')
+                            .prefetch_related('auditor_anggota'),
+        pk=session_id
+    )
+
+    # Otorisasi
+    auditor_profile = getattr(request.user, 'auditor', None)
+    if not request.user.is_superuser:
+        if auditor_profile is None:
+            return HttpResponseForbidden("Halaman ini khusus untuk auditor.")
+        is_ketua = (session.auditor_ketua_id == auditor_profile.id)
+        is_anggota = session.auditor_anggota.filter(pk=auditor_profile.id).exists()
+        if not (is_ketua or is_anggota):
+            return HttpResponseForbidden("Anda tidak berhak melihat laporan auditor untuk sesi ini.")
+
+    # Data audit (KONSISTEN pakai ELEMEN)
+    audits = (
+        Audit.objects
+        .select_related(
+            'auditor',
+            'penilaian_diri',
+            'penilaian_diri__elemen',
+            'penilaian_diri__elemen__kriteria',
+        )
+        .filter(penilaian_diri__audit_session=session)
+        .order_by(
+            'penilaian_diri__elemen__kriteria__nama',  # aman jika 'kode' tidak ada
+            'penilaian_diri__elemen__kode'
+        )
+    )
+
+    # Statistik ringkas
+    stats = {
+        "total": audits.count(),
+        "avg_skor": round(audits.aggregate(v=Avg('skor'))['v'] or 0, 2),
+        "kategori": list(
+            audits.values('kategori_kondisi')
+                  .annotate(jumlah=Count('id'))
+                  .order_by()
+        ),
+    }
+
+    # --- Rekap "Skor per Kriteria (Penilaian Auditor)" ---
+    agg = (
+        audits.values(
+            'penilaian_diri__elemen__kriteria_id',
+            'penilaian_diri__elemen__kriteria__nama',
+        )
+        .annotate(
+            # jika ingin benar-benar "jumlah indikator" dan model Indikator ada,
+            # ganti ke Count('penilaian_diri__indikator_id', distinct=True)
+            jumlah_indikator=Count('penilaian_diri__elemen_id', distinct=True),
+            rata=Avg('skor'),
+        )
+        .order_by('penilaian_diri__elemen__kriteria__nama')
+    )
+
+    kriteria_scores_auditor = [
+        {
+            "nama": x["penilaian_diri__elemen__kriteria__nama"],
+            "jumlah": x["jumlah_indikator"],
+            "rata_rata": round(x["rata"] or 0, 2),
+        }
+        for x in agg
+    ]
+
+    ctx = {
+        "audit_session": session,
+        "audits": audits,
+        "stats": stats,
+        "kriteria_scores_auditor": kriteria_scores_auditor,
+    }
+    return render(request, "ami/laporan_auditor.html", ctx)
+
+
+
+@login_required
+def laporan_index_auditor(request):
+    
+    auditor = getattr(request.user, 'auditor', None)
+
+    # Jika bukan auditor dan bukan superuser -> tolak
+    if not (request.user.is_superuser or auditor):
+        return HttpResponseForbidden("Halaman ini khusus untuk auditor.")
+
+    qs = (AuditSession.objects
+          .select_related('program_studi', 'auditor_ketua')
+          .prefetch_related('auditor_anggota')
+          .all())
+
+    # Batasi hanya sesi milik auditor login (kecuali superuser)
+    if not request.user.is_superuser:
+        qs = qs.filter(Q(auditor_ketua=auditor) | Q(auditor_anggota=auditor)).distinct()
+
+    # Filter querystring
+    status = request.GET.get('status', '').strip()
+    q = request.GET.get('q', '').strip()
+
+    if status:
+        qs = qs.filter(status=status)
+
+    if q:
+        # cari di tahun akademik / semester (text), simple contains
+        qs = qs.filter(Q(tahun_akademik__icontains=q) | Q(semester__icontains=q))
+
+    qs = qs.order_by('-tanggal_mulai_penilaian_mandiri')
+
+    paginator = Paginator(qs, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'ami/laporan_index_auditor.html', {
+        'audit_sessions': page_obj,
+        'status_selected': status,
+        'q': q,
+    })
+
+
+
+
+
+
+
 # ----------------------------
 # Views untuk Kriteria
 # ----------------------------
