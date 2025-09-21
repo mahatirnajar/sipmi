@@ -1060,53 +1060,54 @@ def rekomendasi_tindak_lanjut_update(request, pk):
 def laporan_audit(request, session_id):
     """View untuk menampilkan laporan audit"""
     audit_session = get_object_or_404(AuditSession, pk=session_id)
-    # Periksa izin akses
+    # izin akses
     if not check_audit_session_permission(request.user, audit_session):
         return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses laporan ini.")
-    # Ambil semua penilaian diri dan hasil audit
+    # semua penilaian diri dan hasil audit
     penilaian_diri_list = PenilaianDiri.objects.filter(
         audit_session=audit_session
     ).select_related(
-        'elemen', 'elemen__kriteria'  # Perbaikan: ganti indikator dengan elemen
+        'elemen', 'elemen__kriteria'  
     ).prefetch_related(
         'dokumen_pendukung'
-    ).order_by('elemen__kode')  # Perbaikan: ganti indikator__kode dengan elemen__kode
-    
+    ).order_by('elemen__kode')  
+
     # Hitung statistik untuk laporan
     total_indikator = penilaian_diri_list.count()
     indikator_terisi = penilaian_diri_list.exclude(skor__isnull=True).count()
     persentase_terisi = (indikator_terisi / total_indikator * 100) if total_indikator > 0 else 0
     
-    # Hitung skor per kriteria
+    # --- Hitung skor per kriteria untuk tabel ---
     kriteria_scores = []
     kriteria_list = audit_session.program_studi.lembaga_akreditasi.kriteria.all()
     for kriteria in kriteria_list:
-        total_skor = 0
-        count = 0
+        total_skor, count = 0, 0
         for elemen in kriteria.elemen.all():
             try:
-                penilaian = PenilaianDiri.objects.get(
-                    audit_session=audit_session,
-                    elemen=elemen  # Perbaikan: ganti indikator dengan elemen
-                )
+                penilaian = PenilaianDiri.objects.get(audit_session=audit_session, elemen=elemen)
                 if penilaian.skor is not None:
-                    total_skor += penilaian.skor
+                    total_skor += float(penilaian.skor)
                     count += 1
             except PenilaianDiri.DoesNotExist:
                 pass
         if count > 0:
-            rata_rata = total_skor / count
             kriteria_scores.append({
-                'kriteria': kriteria,
-                'rata_rata': round(rata_rata, 2),
-                'count': count
+                "kriteria": kriteria,
+                "rata_rata": round(total_skor / count, 2),
+                "count": count,
             })
     
     # Hitung skor keseluruhan
-    total_skor = sum(item['rata_rata'] * item['count'] for item in kriteria_scores)
-    total_count = sum(item['count'] for item in kriteria_scores)
+    total_skor = sum(item["rata_rata"] * item["count"] for item in kriteria_scores)
+    total_count = sum(item["count"] for item in kriteria_scores)
     skor_akhir = round(total_skor / total_count, 2) if total_count > 0 else 0
-    
+
+    # --- Data Radar Chart  ---
+    radar_labels, radar_pd = [], []
+    for item in kriteria_scores:
+        radar_labels.append(item["kriteria"].nama)
+        radar_pd.append(item["rata_rata"])
+
     context = {
         'audit_session': audit_session,
         'penilaian_diri_list': penilaian_diri_list,
@@ -1115,6 +1116,9 @@ def laporan_audit(request, session_id):
         'persentase_terisi': persentase_terisi,
         'kriteria_scores': kriteria_scores,
         'skor_akhir': skor_akhir,
+        "radar_labels": radar_labels,
+        "radar_pd": radar_pd,
+        
     }
     return render(request, 'ami/laporan_audit.html', context)
 
@@ -1155,56 +1159,7 @@ def laporan_index_audit(request):
         'user_auditor': user_auditor
     })
 
-@login_required
-def laporan_audit(request, session_id):
-    audit_session = get_object_or_404(AuditSession, pk=session_id)
 
-    if not check_audit_session_permission(request.user, audit_session):
-        return HttpResponseForbidden("Anda tidak memiliki izin untuk mengakses laporan ini.")
-
-    penilaian_diri_list = PenilaianDiri.objects.filter(
-        audit_session=audit_session
-    ).select_related("elemen", "elemen__kriteria").prefetch_related("dokumen_pendukung")
-
-    # --- Hitung skor per kriteria untuk tabel ---
-    kriteria_scores = []
-    kriteria_list = audit_session.program_studi.lembaga_akreditasi.kriteria.all()
-    for kriteria in kriteria_list:
-        total_skor, count = 0, 0
-        for elemen in kriteria.elemen.all():
-            try:
-                penilaian = PenilaianDiri.objects.get(audit_session=audit_session, elemen=elemen)
-                if penilaian.skor is not None:
-                    total_skor += float(penilaian.skor)
-                    count += 1
-            except PenilaianDiri.DoesNotExist:
-                pass
-        if count > 0:
-            kriteria_scores.append({
-                "kriteria": kriteria,
-                "rata_rata": round(total_skor / count, 2),
-                "count": count,
-            })
-
-    total_skor = sum(item["rata_rata"] * item["count"] for item in kriteria_scores)
-    total_count = sum(item["count"] for item in kriteria_scores)
-    skor_akhir = round(total_skor / total_count, 2) if total_count > 0 else 0
-
-    # --- Data Radar Chart (hanya Penilaian Diri) ---
-    radar_labels, radar_pd = [], []
-    for item in kriteria_scores:
-        radar_labels.append(item["kriteria"].nama)
-        radar_pd.append(item["rata_rata"])
-
-    context = {
-        "audit_session": audit_session,
-        "penilaian_diri_list": penilaian_diri_list,
-        "kriteria_scores": kriteria_scores,
-        "skor_akhir": skor_akhir,
-        "radar_labels": radar_labels,
-        "radar_pd": radar_pd,
-    }
-    return render(request, "ami/laporan_audit.html", context)
 
 
 #------------------------------
@@ -1214,13 +1169,13 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
-from .models import AuditSession, Audit
+from .models import AuditSession, Audit,LembagaAkreditasi
 
 @login_required
 def laporan_auditor(request, session_id: int):
     """
     Laporan khusus untuk Tim Auditor pada suatu sesi.
-    Hanya auditor yang ditugaskan (ketua/anggota) atau superuser yang boleh akses.
+    Hanya auditor yang ditugaskan (ketua/anggota) atau superuser yang dapat akses.
     """
     session = get_object_or_404(
         AuditSession.objects.select_related('program_studi', 'auditor_ketua')
@@ -1228,7 +1183,7 @@ def laporan_auditor(request, session_id: int):
         pk=session_id
     )
 
-    # Otorisasi
+    # akses
     auditor_profile = getattr(request.user, 'auditor', None)
     if not request.user.is_superuser:
         if auditor_profile is None:
@@ -1236,9 +1191,9 @@ def laporan_auditor(request, session_id: int):
         is_ketua = (session.auditor_ketua_id == auditor_profile.id)
         is_anggota = session.auditor_anggota.filter(pk=auditor_profile.id).exists()
         if not (is_ketua or is_anggota):
-            return HttpResponseForbidden("Anda tidak berhak melihat laporan auditor untuk sesi ini.")
+            return HttpResponseForbidden("Anda tidak memiliki akses untuk melihat laporan auditor.")
 
-    # Data audit (KONSISTEN pakai ELEMEN)
+    # Data audit 
     audits = (
         Audit.objects
         .select_related(
@@ -1249,7 +1204,7 @@ def laporan_auditor(request, session_id: int):
         )
         .filter(penilaian_diri__audit_session=session)
         .order_by(
-            'penilaian_diri__elemen__kriteria__nama',  # aman jika 'kode' tidak ada
+            'penilaian_diri__elemen__kriteria__nama',  
             'penilaian_diri__elemen__kode'
         )
     )
@@ -1272,8 +1227,7 @@ def laporan_auditor(request, session_id: int):
             'penilaian_diri__elemen__kriteria__nama',
         )
         .annotate(
-            # jika ingin benar-benar "jumlah indikator" dan model Indikator ada,
-            # ganti ke Count('penilaian_diri__indikator_id', distinct=True)
+            # untuk "jumlah indikator"  ganti ke Count('penilaian_diri__indikator_id', distinct=True)
             jumlah_indikator=Count('penilaian_diri__elemen_id', distinct=True),
             rata=Avg('skor'),
         )
@@ -1309,25 +1263,27 @@ def laporan_index_auditor(request):
         return HttpResponseForbidden("Halaman ini khusus untuk auditor.")
 
     qs = (AuditSession.objects
-          .select_related('program_studi', 'auditor_ketua')
+          .select_related('program_studi',
+            'program_studi__lembaga_akreditasi',
+            'auditor_ketua')
           .prefetch_related('auditor_anggota')
           .all())
 
-    # Batasi hanya sesi milik auditor login (kecuali superuser)
-    if not request.user.is_superuser:
-        qs = qs.filter(Q(auditor_ketua=auditor) | Q(auditor_anggota=auditor)).distinct()
-
-    # Filter querystring
+   # --- filters lembaga    ---
     status = request.GET.get('status', '').strip()
     q = request.GET.get('q', '').strip()
+    lembaga_id = request.GET.get('lembaga', '').strip()  # dari <select name="lembaga">
 
     if status:
         qs = qs.filter(status=status)
 
     if q:
-        # cari di tahun akademik / semester (text), simple contains
         qs = qs.filter(Q(tahun_akademik__icontains=q) | Q(semester__icontains=q))
 
+    if lembaga_id:
+        qs = qs.filter(program_studi__lembaga_akreditasi_id=lembaga_id)
+    
+    
     qs = qs.order_by('-tanggal_mulai_penilaian_mandiri')
 
     paginator = Paginator(qs, 12)
@@ -1338,13 +1294,9 @@ def laporan_index_auditor(request):
         'audit_sessions': page_obj,
         'status_selected': status,
         'q': q,
+        'lembaga_list': LembagaAkreditasi.objects.all(),  
+        'lembaga_selected': lembaga_id,                  
     })
-
-
-
-
-
-
 
 # ----------------------------
 # Views untuk Kriteria
