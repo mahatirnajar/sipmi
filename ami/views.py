@@ -1533,7 +1533,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
-from .models import AuditSession, Audit
+from .models import AuditSession, Audit, KoordinatorProgramStudi 
 
 
 @login_required
@@ -1555,11 +1555,11 @@ def laporan_internal(request, session_id: int):
     if not (request.user.is_superuser or request.user.is_staff):
         auditor_profile = getattr(request.user, 'auditor', None)
         if not auditor_profile:
-            return HttpResponseForbidden("Halaman ini khusus internal.")
+            return HttpResponseForbidden("Halaman ini tidak dapat diakses.")
         is_ketua = (session.auditor_ketua_id == auditor_profile.id)
         is_anggota = session.auditor_anggota.filter(pk=auditor_profile.id).exists()
         if not (is_ketua or is_anggota):
-            return HttpResponseForbidden("Anda tidak berhak melihat laporan ini.")
+            return HttpResponseForbidden("Anda tidak memiliki akses untuk melihat laporan ini.")
 
     # Data hasil audit (pakai ELEMEN)
     audits = (
@@ -1569,17 +1569,26 @@ def laporan_internal(request, session_id: int):
             'penilaian_diri',
             'penilaian_diri__elemen',
             'penilaian_diri__elemen__kriteria',
+            
         )
         .filter(penilaian_diri__audit_session=session)
         .order_by('penilaian_diri__elemen__kriteria__nama',
                   'penilaian_diri__elemen__kode')
     )
 
+    #koordinator prodi
+    koordinator_prodi = (
+        KoordinatorProgramStudi.objects
+        .select_related('program_studi')
+        .filter(program_studi=session.program_studi)
+        .order_by('-id')  # atau '-created_at' jika ada timestamp
+        .first())
     
 
     ctx = {
         "audit_session": session,
         "audits": audits,
+        "koordinator_prodi": koordinator_prodi,
         
     }
     return render(request, "ami/laporan_internal.html", ctx)

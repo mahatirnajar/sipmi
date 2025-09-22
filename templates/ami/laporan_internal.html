@@ -28,6 +28,7 @@
 
     {# ====================== SAMPUL / COVER ====================== #}
     <div class="bg-white px-6 pt-10 pb-8">
+        <br></br>
       <h1 class="text-center font-extrabold text-2xl uppercase tracking-wide">
         LAPORAN AUDIT PROGRAM STUDI
       </h1>
@@ -45,35 +46,35 @@
         <table class="cover-table w-full text-sm border border-black">
           <tbody>
             <tr>
-              <td class="w-1/2 px-3 py-2 underline decoration-red-600 decoration-2">Nama Program Studi</td>
+              <td class="w-1/2 px-3 py-2  decoration-2">Nama Program Studi</td>
               <td class="px-3 py-2">
                 {{ audit_session.program_studi.nama|default:"..............................." }}
               </td>
             </tr>
             <tr>
-              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Fakultas</td>
+              <td class="px-3 py-2  decoration-2">Fakultas</td>
               <td class="px-3 py-2">
                 {% firstof audit_session.program_studi.fakultas.nama audit_session.program_studi.fakultas "..............................." %}
               </td>
             </tr>
             <tr>
-              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Tanggal Audit</td>
+              <td class="px-3 py-2  decoration-2">Tanggal Audit</td>
               <td class="px-3 py-2">
                 {% if audit_session.tanggal_mulai_penilaian_mandiri or audit_session.tanggal_selesai_penilaian_auditor %}
-                  {{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d M Y" }} – {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d M Y" }}
+                  {{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d/m/Y" }} – {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d/m/Y" }}
                 {% else %}
                   ...............................
                 {% endif %}
               </td>
             </tr>
             <tr>
-              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Ketua Auditor</td>
+              <td class="px-3 py-2  decoration-2">Ketua Auditor</td>
               <td class="px-3 py-2">
                 {{ audit_session.auditor_ketua.nama_lengkap|default:"..............................." }}
               </td>
             </tr>
             <tr>
-              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Anggota Auditor</td>
+              <td class="px-3 py-2  decoration-2">Anggota Auditor</td>
               <td class="px-3 py-2">
                 {% for a in audit_session.auditor_anggota.all %}
                   {{ a.nama_lengkap }}{% if not forloop.last %}, {% endif %}
@@ -83,24 +84,27 @@
               </td>
             </tr>
             <tr>
-              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Koordinator Program Studi</td>
+              <td class="px-3 py-2  decoration-2">Koordinator Program Studi</td>
               <td class="px-3 py-2">
-                {% firstof audit_session.program_studi.koordinator audit_session.program_studi.kaprodi "..............................." %}
+                {{ koordinator_prodi.nama_lengkap|default:"..............................." }}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+        <br> </br>
+
       <div class="flex justify-center my-8">
         <img src="/media/logountad.png" alt="Logo" class="h-20">
 
       </div>
 
+      <br></br>
+      <br></br>
       <div class="text-center font-extrabold uppercase leading-tight">
         <div>PUSAT PENJAMINAN MUTU INTERNAL (PPMI)</div>
-        <div>LEMBAGA PENJAMINAN MUTU DAN PENGEMBANGAN</div>
-        <div>PEMBELAJARAN (LPMPP)</div>
+        <div>LEMBAGA PENJAMINAN MUTU DAN PENGEMBANGAN PEMBELAJARAN (LPMPP)</div>
         <div>UNIVERSITAS TADULAKO</div>
       </div>
       <div class="text-center font-bold mt-3">
