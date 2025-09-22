@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block title %}Laporan Internal - {{ audit_session.program_studi.nama }} | AMI{% endblock %}
+{% block page_title %}Laporan Internal{% endblock %}
+{% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}){% endblock %}
+{% block mobile_title %}Laporan Internal{% endblock %}
+
+{% block content %}
+
+<style>
+@media print{
+  .print\:hidden{display:none!important}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  @page{size:A4;margin:18mm 14mm}
+  .no-break{page-break-inside:avoid;break-inside:avoid}
+  .page-break{page-break-after:always}
+  .ttd-space{height:80px!important}
+  .ttd-line{width:56mm;border-top:1.5px solid #9ca3af;margin:8px auto 0}
+  .print\:text-xs{font-size:11px!important}
+  .print\:text-sm{font-size:12px!important}
+}
+.cover-table td{border:1px solid #111}
+</style>
+
+<div class="p-4 lg:p-6 bg-gray-50">
+  <div class="max-w-5xl mx-auto">
+
+    {# ====================== SAMPUL / COVER ====================== #}
+    <div class="bg-white px-6 pt-10 pb-8">
+      <h1 class="text-center font-extrabold text-2xl uppercase tracking-wide">
+        LAPORAN AUDIT PROGRAM STUDI
+      </h1>
+
+      <h2 class="text-center font-semibold text-lg mt-2">
+        ({{ audit_session.program_studi.jenjang|default:"D3/D4/S1/S2/S3" }})
+        <span class="inline-block ml-1 align-bottom">
+          {{ audit_session.program_studi.nama|default:"................................" }}
+        </span>
+      </h2>
+
+      <div class="h-12 md:h-16"></div>
+
+      <div class="max-w-xl mx-auto">
+        <table class="cover-table w-full text-sm border border-black">
+          <tbody>
+            <tr>
+              <td class="w-1/2 px-3 py-2 underline decoration-red-600 decoration-2">Nama Program Studi</td>
+              <td class="px-3 py-2">
+                {{ audit_session.program_studi.nama|default:"..............................." }}
+              </td>
+            </tr>
+            <tr>
+              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Fakultas</td>
+              <td class="px-3 py-2">
+                {% firstof audit_session.program_studi.fakultas.nama audit_session.program_studi.fakultas "..............................." %}
+              </td>
+            </tr>
+            <tr>
+              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Tanggal Audit</td>
+              <td class="px-3 py-2">
+                {% if audit_session.tanggal_mulai_penilaian_mandiri or audit_session.tanggal_selesai_penilaian_auditor %}
+                  {{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d M Y" }} – {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d M Y" }}
+                {% else %}
+                  ...............................
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Ketua Auditor</td>
+              <td class="px-3 py-2">
+                {{ audit_session.auditor_ketua.nama_lengkap|default:"..............................." }}
+              </td>
+            </tr>
+            <tr>
+              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Anggota Auditor</td>
+              <td class="px-3 py-2">
+                {% for a in audit_session.auditor_anggota.all %}
+                  {{ a.nama_lengkap }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                  ...............................
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <td class="px-3 py-2 underline decoration-red-600 decoration-2">Koordinator Program Studi</td>
+              <td class="px-3 py-2">
+                {% firstof audit_session.program_studi.koordinator audit_session.program_studi.kaprodi "..............................." %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-center my-8">
+        <img src="/media/logountad.png" alt="Logo" class="h-20">
+
+      </div>
+
+      <div class="text-center font-extrabold uppercase leading-tight">
+        <div>PUSAT PENJAMINAN MUTU INTERNAL (PPMI)</div>
+        <div>LEMBAGA PENJAMINAN MUTU DAN PENGEMBANGAN</div>
+        <div>PEMBELAJARAN (LPMPP)</div>
+        <div>UNIVERSITAS TADULAKO</div>
+      </div>
+      <div class="text-center font-bold mt-3">
+        {{ audit_session.tahun_akademik|default:"2025" }}
+      </div>
+    </div>
+
+    <div class="page-break"></div>
+    {# =================== /SAMPUL / COVER =================== #}
+
+   
+
+  </div>
+</div>
+{% endblock %}

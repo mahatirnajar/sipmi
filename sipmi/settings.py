@@ -74,7 +74,7 @@ STATICFILES_DIRS = [
     BASE_DIR / 'sipmi_core' / 'static', # Point to your static files directory
 ]
 # STATIC_ROOT = BASE_DIR / 'staticfiles' # For production collectstatic
-
+STATIC_ROOT = BASE_DIR / "staticfiles"
 # ... other settings ...
 
 # Define custom user model if needed for roles (optional but recommended)
@@ -123,7 +123,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+#STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -151,3 +151,7 @@ CELERY_BEAT_SCHEDULE = {
         # 'schedule': crontab(hour=0, minute=5),
     },
 }
+
+#media
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

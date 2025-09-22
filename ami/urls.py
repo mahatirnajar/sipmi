@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name = 'ami'
 
@@ -80,4 +82,12 @@ urlpatterns = [
     # Laporan khusus Auditor
     path('laporan/auditor/', views.laporan_index_auditor, name='laporan_index_auditor'),
     path('laporan/auditor/<int:session_id>/', views.laporan_auditor, name='laporan_auditor'),
+
+    #Laporan internal
+    path('laporan/internal/<int:session_id>/', views.laporan_internal, name='laporan_internal'),
+
 ]
+
+#untuk gambar
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

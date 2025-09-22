@@ -90,6 +90,10 @@
                 <div class="flex flex-wrap gap-2">
                   <a href="{% url 'ami:laporan_auditor' session_id=s.id %}"
                      class="inline-flex items-center px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                    <i class="fas fa-user-check mr-1"></i> Hasil Penilaian
+                  </a>
+                  <a href="{% url 'ami:laporan_internal' session_id=s.id %}"
+                     class="inline-flex items-center px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
                     <i class="fas fa-user-check mr-1"></i> Lihat Laporan
                   </a>
                   {# Opsional: jika auditor juga perlu melihat versi Prodi #}

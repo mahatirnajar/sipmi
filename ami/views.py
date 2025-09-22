@@ -1524,3 +1524,62 @@ def elemen_delete(request, pk):
     return render(request, 'ami/elemen_confirm_delete.html', {
         'elemen': elemen
     })
+
+
+#---------------------
+#  LAPORAN INTERNAL
+#---------------------
+from django.contrib.auth.decorators import login_required
+from django.db.models import Avg, Count
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, render
+from .models import AuditSession, Audit
+
+
+@login_required
+def laporan_internal(request, session_id: int):
+    """
+    Laporan Internal (cover).
+    Akses: superuser , atau auditor yang ditugaskan (ketua/anggota) pada sesi ini.
+    """
+    # Ambil sesi + relasi penting
+    session = get_object_or_404(
+        AuditSession.objects.select_related('program_studi', 'auditor_ketua')
+                            .prefetch_related('auditor_anggota'),
+        pk=session_id
+    )
+
+    # akun yang bisa akses
+    # - superuser 
+    # - auditor yang ditugaskan
+    if not (request.user.is_superuser or request.user.is_staff):
+        auditor_profile = getattr(request.user, 'auditor', None)
+        if not auditor_profile:
+            return HttpResponseForbidden("Halaman ini khusus internal.")
+        is_ketua = (session.auditor_ketua_id == auditor_profile.id)
+        is_anggota = session.auditor_anggota.filter(pk=auditor_profile.id).exists()
+        if not (is_ketua or is_anggota):
+            return HttpResponseForbidden("Anda tidak berhak melihat laporan ini.")
+
+    # Data hasil audit (pakai ELEMEN)
+    audits = (
+        Audit.objects
+        .select_related(
+            'auditor',
+            'penilaian_diri',
+            'penilaian_diri__elemen',
+            'penilaian_diri__elemen__kriteria',
+        )
+        .filter(penilaian_diri__audit_session=session)
+        .order_by('penilaian_diri__elemen__kriteria__nama',
+                  'penilaian_diri__elemen__kode')
+    )
+
+    
+
+    ctx = {
+        "audit_session": session,
+        "audits": audits,
+        
+    }
+    return render(request, "ami/laporan_internal.html", ctx)
