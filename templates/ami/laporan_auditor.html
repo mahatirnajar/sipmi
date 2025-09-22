@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static custom_filters %}
 
-{% block title %}Laporan Auditor - {{ audit_session.program_studi.nama }} | AMI{% endblock %}
-{% block page_title %}Laporan Auditor{% endblock %}
+{% block title %}Rekap Penilaian - {{ audit_session.program_studi.nama }} | AMI{% endblock %}
+{% block page_title %}Rekap Penilaian {% endblock %}
 {% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}){% endblock %}
-{% block mobile_title %}Laporan Auditor{% endblock %}
+{% block mobile_title %}Rekap Penilaian {% endblock %}
 
 {% block content %}
 
@@ -38,7 +38,7 @@
             <i class="fas fa-user-check text-indigo-600 text-2xl lg:text-3xl"></i>
           </div>
         </div>
-        <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Laporan Tim Auditor</h1>
+        <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Rekap Penilaian Tim Auditor</h1>
         <h2 class="text-lg lg:text-xl font-semibold text-gray-700 mb-3">
           {{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.nama }}
         </h2>
