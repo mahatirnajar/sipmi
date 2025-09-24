@@ -8,9 +8,8 @@
 
 {% block content %}
   
-</div>
 <div class="p-4 lg:p-6 bg-gray-50">
-  <div class="max-w-5xl mx-auto">center
+  <div class="max-w-5xl mx-auto">
 
     {# ====================== SAMPUL / COVER ====================== #}
     <div class="bg-white px-6 pt-10 pb-8">
@@ -101,8 +100,221 @@
     <div class="page-break"></div>
     {# =================== /SAMPUL / COVER =================== #}
 
-   
 
+    <!-- ====================== HALAMAN 2 ====================== -->
+<div class="bg-white px-6 py-8 no-break">
+  <h1 class="text-center font-extrabold text-2xl uppercase tracking-wide">
+       LAPORAN AUDIT INTERNAL
+  </h1>
+  <div class="h-12 md:h-16"></div>
+  <!-- I. Informasi Umum -->
+  <h2 class="section-title text-lg mb-3 font-bold">I.  Informasi Umum</h2>
+
+  <table class="text-sm ml-4">
+  <tbody>
+    <tr>
+      <td class="pr-4 ">Nama Program Studi</td>
+      <td>: {{ audit_session.program_studi.nama }}</td>
+    </tr>
+    <tr>
+      <td class="pr-4 ">Fakultas</td>
+      <td>: {{ audit_session.program_studi.fakultas }}</td>
+    </tr>
+    <tr>
+      <td class="pr-4">Tanggal Audit</td>
+      <td>:
+        {{ audit_session.tanggal_mulai_penilaian_mandiri|date:"d/m/Y" }}
+        – {{ audit_session.tanggal_selesai_penilaian_auditor|date:"d/m/Y" }}
+      </td>
+    </tr>
+    <tr>
+      <td class="pr-4 ">Ketua Auditor</td>
+      <td>: {{ audit_session.auditor_ketua.nama_lengkap }}</td>
+    </tr>
+    <tr>
+      <td class="pr-4 ">Anggota Auditor</td>
+      <td>:
+        {% for a in audit_session.auditor_anggota.all %}
+          {{ a.nama_lengkap }}{% if not forloop.last %}, {% endif %}
+        {% empty %}...............................{% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td class="pr-4 ">Koordinator Program Studi</td>
+      <td>: {{ koordinator_prodi.nama_lengkap|default:"..............................." }}</td>
+    </tr>
+  </tbody>
+</table>
+
+
+  <div class="h-12 md:h-10"></div>
+
+  <!-- II. Tujuan Audit -->
+  <h2 class="section-title text-lg mb-2 font-bold">II. Tujuan Audit</h2>
+  <ol class="list-[lower-alpha] pl-6 text-sm space-y-1 ml-4">
+    <li>Memastikan pelaksanaan standar yang telah ditetapkan.</li>
+    <li>Memastikan kesesuaian sistem manajemen dengan standar yang telah ditetapkan.</li>
+    <li>Memastikan akuntabilitas dari pelaksanaan standar.</li>
+    <li>Menentukan ruang lingkup, perbaikan, dan penguatan mutu Program Studi.</li>
+    <li>Mengevaluasi efektivitas perencanaan, pelaksanaan, serta pengukuran mutu.</li>
+    <li>Menetapkan kesiapan Program Studi dalam pelaksanaan program akreditasi.</li>
+    <li>Menunjang kelancaran pelaksanaan pengelolaan Program Studi.</li>
+  </ol>
+
+  
+  <div class="h-12 md:h-10"></div>
+
+  <h2 class="section-title text-lg mb-3 font-bold">III. Ruang Lingkup Audit</h2>
+
+{% with kode=audit_session.program_studi.lembaga_akreditasi.kode|upper %}
+  {% if kode == "LAMTEKNIK" %}
+    <table class="border border-black border-collapse text-sm ml-6 ">
+      <thead class="bg-gray-50">
+        <tr><th class="border border-black px-3 py-2 text-left">{{ audit_session.program_studi.lembaga_akreditasi.kode}}</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="border border-black px-3 py-2">1. Mutu kepemimpinan dan kinerja tata kelola</td></tr>
+        <tr><td class="border border-black px-3 py-2">2. Mutu dan produktivitas luaran (outputs) dan capaian (outcomes)</td></tr>
+        <tr><td class="border border-black px-3 py-2">3. Mutu proses</td></tr>
+        <tr><td class="border border-black px-3 py-2">4. Mutu input</td></tr>
+        <tr><td class="border border-black px-3 py-2">5. Penjaminan mutu</td></tr>
+        <tr><td class="border border-black px-3 py-2">6. Pengembangan berkelanjutan</td></tr>
+        <tr><td class="border border-black px-3 py-2">7. Keterlibatan pemangku kepentingan</td></tr>
+
+      </tbody>
+    </table>
+
+  {% elif kode == "LAMEMBA" %}
+    <table class="border border-black border-collapse text-sm ml-6 ">
+      <thead class="bg-gray-50">
+        <tr><th class="border border-black px-3 py-2 text-left">{{ audit_session.program_studi.lembaga_akreditasi.kode}}</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="border border-black px-3 py-2">1.	Visi, Misi, Tujuan, dan Strategi  </td></tr>
+        <tr><td class="border border-black px-3 py-2">2.	Tata Pamong, Tata Kelola, dan Kerjasama </td></tr>
+        <tr><td class="border border-black px-3 py-2">3.	Mahasiswa </td></tr>
+        <tr><td class="border border-black px-3 py-2">4.	Sumber Daya Manusia </td></tr>
+        <tr><td class="border border-black  px-3 py-2">5.	Keuangan, Sarana, dan Prasarana </td></tr>
+        <tr><td class="border border-black px-3 py-2">6.	Kurikulum </td></tr>
+        <tr><td class="border border-black px-3 py-2">7.	Penelitian </td></tr>
+        <tr><td class="border border-black px-3 py-2">8.	Pengabdian pada Masyarakat </td></tr>
+        <tr><td class="border border-black px-3 py-2">9.	Luaran dan Capaian Tridharma </td></tr>
+
+      </tbody>
+    </table>
+
+
+  {% elif kode == "LAM-PTKes" %}
+    <table class="border border-black border-collapse text-sm ml-6 ">
+      <thead class="bg-gray-50">
+        <tr><th class="border border-black px-3 py-2 text-left">{{ audit_session.program_studi.lembaga_akreditasi.kode}}</th></tr>
+      </thead>
+      <tbody>
+        
+        <tr><td class="border border-black px-3 py-2">1.	Visi, Misi, Tujuan, dan Strategi Pencapaian</td></tr>
+        <tr><td class="border border-black px-3 py-2">2.	Tata Pamong, Kepemimpinan, Sistem Pengelolaan, dan Kerjasama</td></tr>
+        <tr><td class="border border-black px-3 py-2">3.	Mahasiswa</td></tr>
+        <tr><td class="border border-black px-3 py-2">4.	Sumber Daya Manusia</td></tr>
+        <tr><td class="border border-black px-3 py-2">5.	Keuangan, Sarana, dan Prasarana</td></tr>
+          <tr><td class="border border-black px-3 py-2">6.	Pendidikan</td></tr>
+        <tr><td class="border border-black px-3 py-2">7.	Penelitian</td></tr>
+        <tr><td class="border border-black px-3 py-2">8.	Pengabdian pada Masyarakat</td></tr>
+        <tr><td class="border border-black px-3 py-2">9.	Luaran dan Capaian Tridharma</td></tr>
+
+      </tbody>
+    </table>  
+
+  {% else %}
+    <table class="border border-black border-collapse text-sm ml-6 ">
+      <thead class="bg-gray-50">
+        <tr><th class="border border-black px-3 py-2 text-left">{{ audit_session.program_studi.lembaga_akreditasi.kode}}</th></tr>
+      </thead>
+      <tbody>
+        
+        <tr><td class="border border-black px-3 py-2">1.   Visi, Misi, Tujuan, dan Strategi </td></tr>
+        <tr><td class="border border-black px-3 py-2">2.	Tata Pamong, Tata Kelola, dan Kerjasama</td></tr>
+        <tr><td class="border border-black px-3 py-2">3.	Mahasiswa</td></tr>
+        <tr><td class="border border-black px-3 py-2">4.	Sumber Daya Manusia</td></tr>
+        <tr><td class="border border-black px-3 py-2">5.	Keuangan, Sarana, dan Prasarana</td></tr>
+        <tr><td class="border border-black px-3 py-2">6.	Pendidikan</td></tr>
+        <tr><td class="border border-black px-3 py-2">7.	Penelitian</td></tr>
+        <tr><td class="border border-black px-3 py-2">8.	Pengabdian pada Masyarakat</td></tr>
+        <tr><td class="border border-black px-3 py-2">9.	Luaran dan Capaian Tridharma</td></tr>
+
+      </tbody>
+    </table>
+  {% endif %}
+{% endwith %}
+
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== /HALAMAN 3 ==================== -->
+<div class="bg-white px-6 py-8 no-break">
+  
+
+  <!-- IV. Metodologi Audit -->
+  <h2 class="section-title text-lg mb-2 font-bold">IV. Metodologi Audit</h2>
+
+  <p class="text-sm ml-7 text-justify mr-4">Metode yang digunakan dalam pelaksanaan audit mutu internal melalui  observasi telaah dokumen dan visitasi dengan melakukan wawancara pada pimpinan UPPS, Koordinator Program Studi, mahasiswa, dosen dan tenaga kependidikan.  </p>
+  <div class="h-12 md:h-10"></div>
+  <!-- V. Hasil Audit -->
+  <h2 class="section-title text-lg mb-2 font-bold">V. Hasil Audit</h2>
+  <div>
+  <table class="border border-black border-collapse text-sm ml-6 mr-4">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="border border-black px-3 py-2 text-left">Aspek yang Dinilai</th>
+      <th class="border border-black px-3 py-2 text-left">Kategori</th>
+      <th class="border border-black px-3 py-2 text-left">Temuan Audit</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% regroup audits by penilaian_diri.elemen.kriteria.nama as grouped %}
+  {% for group in grouped %}
+    <tr>
+      <td class="border border-black px-3 py-2 align-top text-sm">
+        <strong>{{ group.grouper }}</strong>
+        <ol class="list-decimal ml-4">
+          {% for x in group.list|dictsort:"penilaian_diri.elemen.kode" %}
+            <li>{{ x.penilaian_diri.elemen.kode }} - {{ x.penilaian_diri.elemen.nama }}</li>
+          {% endfor %}
+        </ol>
+      </td>
+      <td class="border border-black px-3 py-2 align-top">
+        <ol class="list-decimal ml-4">
+          {% for x in group.list|dictsort:"penilaian_diri.elemen.kode" %}
+            <li>{{ x.get_kategori_kondisi_display|default:"-" }}</li>
+          {% endfor %}
+        </ol>
+      </td>
+      <td class="border  border-black px-3 py-2 align-top">
+        <ol class="list-decimal ml-4">
+          {% for x in group.list|dictsort:"penilaian_diri.elemen.kode" %}
+            <li>{{ x.deskripsi_kondisi|default:"-" }}</li>
+          {% endfor %}
+        </ol>
+      </td>
+    </tr>
+      {% empty %}
+        <tr>
+          <td colspan="3" class="px-3 py-6 text-center text-gray-500">Belum ada hasil audit.</td>
+        </tr>
+       {% endfor %}
+      </tbody>
+
+      </table>
+
+        <p class="text-sm ml-7 text-justify mr-4">Keterangan : Jika pada Kolom Status Tidak Tercapai maka status KTS diberikan: KTS MINOR (ringan) adalah Ketidaksesuaian yang memiliki dampak terbatas terhadap sistem penjaminan mutu, KTS MAYOR (berat) adalah Ketidaksesuaian yang memiliki dampak luas terhadap sistem penjaminan mutu. Jika pada kolom status Tercapai namun dimungkinkan membutuhkan konfirmasi kinerja dan atau bukti link dokumen maka status OB  </p>
+
+      </div>
+      <div class="page-break"></div>
+
+<!-- ==================== /HALAMAN 4 ==================== -->
+  
+
+</div>
+    
   </div>
 </div>
 {% endblock %}

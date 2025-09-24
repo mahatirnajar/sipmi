@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.db.models import Q
 from django.utils import timezone
+from django.db.models import Avg, Count
 
 from .models import (
     LembagaAkreditasi,
@@ -1529,12 +1530,6 @@ def elemen_delete(request, pk):
 #---------------------
 #  LAPORAN INTERNAL
 #---------------------
-from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count
-from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
-from .models import AuditSession, Audit, KoordinatorProgramStudi 
-
 
 @login_required
 def laporan_internal(request, session_id: int):
@@ -1584,11 +1579,14 @@ def laporan_internal(request, session_id: int):
         .order_by('-id')  # atau '-created_at' jika ada timestamp
         .first())
     
+    
+    
 
     ctx = {
         "audit_session": session,
         "audits": audits,
         "koordinator_prodi": koordinator_prodi,
+        
         
     }
     return render(request, "ami/laporan_internal.html", ctx)
