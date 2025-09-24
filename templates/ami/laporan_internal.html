@@ -231,7 +231,7 @@
       </thead>
       <tbody>
         
-        <tr><td class="border border-black px-3 py-2">1.   Visi, Misi, Tujuan, dan Strategi </td></tr>
+        <tr><td class="border border-black px-3 py-2">1.  Visi, Misi, Tujuan, dan Strategi </td></tr>
         <tr><td class="border border-black px-3 py-2">2.	Tata Pamong, Tata Kelola, dan Kerjasama</td></tr>
         <tr><td class="border border-black px-3 py-2">3.	Mahasiswa</td></tr>
         <tr><td class="border border-black px-3 py-2">4.	Sumber Daya Manusia</td></tr>
@@ -277,7 +277,7 @@
         <strong>{{ group.grouper }}</strong>
         <ol class="list-decimal ml-4">
           {% for x in group.list|dictsort:"penilaian_diri.elemen.kode" %}
-            <li>{{ x.penilaian_diri.elemen.kode }} - {{ x.penilaian_diri.elemen.nama }}</li>
+            <li> {{ x.penilaian_diri.elemen.nama }}</li>
           {% endfor %}
         </ol>
       </td>
@@ -304,14 +304,87 @@
       </tbody>
 
       </table>
-
+        <div class="h-5 md:h-5"></div>
         <p class="text-sm ml-7 text-justify mr-4">Keterangan : Jika pada Kolom Status Tidak Tercapai maka status KTS diberikan: KTS MINOR (ringan) adalah Ketidaksesuaian yang memiliki dampak terbatas terhadap sistem penjaminan mutu, KTS MAYOR (berat) adalah Ketidaksesuaian yang memiliki dampak luas terhadap sistem penjaminan mutu. Jika pada kolom status Tercapai namun dimungkinkan membutuhkan konfirmasi kinerja dan atau bukti link dokumen maka status OB  </p>
-
+        <div class="h-5 md:h-5"></div>
       </div>
       <div class="page-break"></div>
 
 <!-- ==================== /HALAMAN 4 ==================== -->
-  
+  {# ======================= RADAR CHART — ELEMEN ======================= #}
+
+
+
+<div class="chart-wrap">
+  <canvas id="radarChart"></canvas>
+</div>
+
+{# CDN Chart.js — kalau sudah ada di base.html, hapus baris ini #}
+
+
+<script>
+  // Data dari view (sudah berupa JSON valid)
+  const labels = {{ chart_labels_json|safe }};
+  const scores = {{ chart_scores_json|safe }};
+
+
+  // Guard: kalau data kosong, jangan render chart
+  if (Array.isArray(labels) && labels.length && Array.isArray(scores) && scores.length) {
+    const ctx = document.getElementById('radarChart').getContext('2d');
+
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Skor Audit per Elemen',
+          data: scores,
+          fill: true,
+          backgroundColor: 'rgba(54, 162, 235, 0.20)',
+          borderColor: 'rgb(54, 162, 235)',
+          pointBackgroundColor: 'rgb(54, 162, 235)',
+          borderWidth: 2,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, 
+        scales: {
+          r: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,   
+              showLabelBackdrop: false
+            },
+            grid: { circular: true }
+          }
+        },
+        plugins: {
+          legend: { display: false },  
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.formattedValue}`
+            }
+          }
+        },
+        elements: { line: { borderWidth: 2 } },
+        animation: false 
+      }
+    });
+  }
+</script>
+
+{# Narasi #}
+<p class="mt-3 text-sm text-justify">
+  <em>Diagram Kekuatan dan Kelemahan Prodi.</em>
+</p>
+<p class="text-sm text-justify">
+  Hasil audit menunjukkan Prodi <strong>{{ audit_session.program_studi.nama }}</strong>
+  memiliki <strong>kekuatan</strong> pada elemen <strong>{{ best_label }}</strong>,
+  serta <strong>kelemahan</strong> pada elemen <strong>{{ worst_label }}</strong>.
+</p>
+{# ==================== /RADAR CHART — ELEMEN ==================== #}
 
 </div>
     

@@ -1527,9 +1527,11 @@ def elemen_delete(request, pk):
     })
 
 
+
 #---------------------
 #  LAPORAN INTERNAL
 #---------------------
+import json 
 
 @login_required
 def laporan_internal(request, session_id: int):
@@ -1579,14 +1581,44 @@ def laporan_internal(request, session_id: int):
         .order_by('-id')  # atau '-created_at' jika ada timestamp
         .first())
     
-    
-    
+    # === RATA-RATA PER KRITERIA (dari PenilaianDiri) ===
+    kriteria_avg = (
+        PenilaianDiri.objects
+        .filter(audit_session=session, skor__isnull=False)
+        .values(
+            "elemen__kriteria__id",
+            "elemen__kriteria__kode",
+            "elemen__kriteria__nama",
+        )
+        .annotate(avg_skor=Avg("skor"))  # rata-rata skor semua elemen dalam kriteria tsb
+        .order_by("elemen__kriteria__kode", "elemen__kriteria__nama")
+    )
+
+    chart_labels = []
+    chart_scores = []
+    for k in kriteria_avg:
+        kode = k["elemen__kriteria__kode"] or ""
+        nama = k["elemen__kriteria__nama"] or ""
+        label = f"{nama}" if kode else (nama or "-")
+        chart_labels.append(label)
+        chart_scores.append(round(k["avg_skor"] or 0, 2))
+
+    # Narasi opsional
+    if chart_scores:
+        best_i = max(range(len(chart_scores)), key=lambda i: chart_scores[i])
+        worst_i = min(range(len(chart_scores)), key=lambda i: chart_scores[i])
+        best_label = chart_labels[best_i]
+        worst_label = chart_labels[worst_i]
+    else:
+        best_label = worst_label = "-"
 
     ctx = {
         "audit_session": session,
         "audits": audits,
         "koordinator_prodi": koordinator_prodi,
-        
-        
+        "chart_labels_json": json.dumps(chart_labels),   # ← untuk template radar
+        "chart_scores_json": json.dumps(chart_scores),
+        "best_label": best_label,
+        "worst_label": worst_label,
     }
     return render(request, "ami/laporan_internal.html", ctx)
