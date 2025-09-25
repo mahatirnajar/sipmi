@@ -1175,8 +1175,8 @@ from .models import AuditSession, Audit,LembagaAkreditasi
 @login_required
 def laporan_auditor(request, session_id: int):
     """
-    Laporan khusus untuk Tim Auditor pada suatu sesi.
-    Hanya auditor yang ditugaskan (ketua/anggota) atau superuser yang dapat akses.
+    Laporan khusus untuk Tim Auditor pada sesi.
+    ketua/anggota atau superuser yang dapat akses.
     """
     session = get_object_or_404(
         AuditSession.objects.select_related('program_studi', 'auditor_ketua')
@@ -1188,7 +1188,7 @@ def laporan_auditor(request, session_id: int):
     auditor_profile = getattr(request.user, 'auditor', None)
     if not request.user.is_superuser:
         if auditor_profile is None:
-            return HttpResponseForbidden("Halaman ini khusus untuk auditor.")
+            return HttpResponseForbidden("Halaman dapat diakses oleh auditor.")
         is_ketua = (session.auditor_ketua_id == auditor_profile.id)
         is_anggota = session.auditor_anggota.filter(pk=auditor_profile.id).exists()
         if not (is_ketua or is_anggota):
@@ -1244,6 +1244,7 @@ def laporan_auditor(request, session_id: int):
         for x in agg
     ]
 
+    
     ctx = {
         "audit_session": session,
         "audits": audits,
@@ -1529,9 +1530,9 @@ def elemen_delete(request, pk):
 
 
 #---------------------
-#  LAPORAN INTERNAL
+#  VIEW UNTUK LAPORAN INTERNAL
 #---------------------
-import json 
+import json, re
 
 @login_required
 def laporan_internal(request, session_id: int):
@@ -1581,7 +1582,7 @@ def laporan_internal(request, session_id: int):
         .order_by('-id')  # atau '-created_at' jika ada timestamp
         .first())
     
-    # === RATA-RATA PER KRITERIA (dari PenilaianDiri) ===
+    # rata-rata kriteria
     kriteria_avg = (
         PenilaianDiri.objects
         .filter(audit_session=session, skor__isnull=False)
@@ -1590,7 +1591,7 @@ def laporan_internal(request, session_id: int):
             "elemen__kriteria__kode",
             "elemen__kriteria__nama",
         )
-        .annotate(avg_skor=Avg("skor"))  # rata-rata skor semua elemen dalam kriteria tsb
+        .annotate(avg_skor=Avg("skor"))  # rata-rata skor semua elemen dalam kriteria
         .order_by("elemen__kriteria__kode", "elemen__kriteria__nama")
     )
 
@@ -1603,7 +1604,7 @@ def laporan_internal(request, session_id: int):
         chart_labels.append(label)
         chart_scores.append(round(k["avg_skor"] or 0, 2))
 
-    # Narasi opsional
+    # Narasi 
     if chart_scores:
         best_i = max(range(len(chart_scores)), key=lambda i: chart_scores[i])
         worst_i = min(range(len(chart_scores)), key=lambda i: chart_scores[i])
@@ -1612,13 +1613,44 @@ def laporan_internal(request, session_id: int):
     else:
         best_label = worst_label = "-"
 
+   # Hitung total elemen dan elemen tanpa dokumen
+    total_dokumen_dibutuhkan = 0
+    belum_disipakan = 0
+
+    for k in session.program_studi.lembaga_akreditasi.kriteria.all():
+        for elemen in k.elemen.all():
+         total_dokumen_dibutuhkan += 1
+         pd = PenilaianDiri.objects.filter(audit_session=session, elemen=elemen).first()
+        if not pd or not pd.bukti_dokumen:  # kalau kosong / NULL
+            belum_disipakan += 1
+
+    # hitung persentase
+    persen_belum = round((belum_disipakan / total_dokumen_dibutuhkan) * 100, 2) if total_dokumen_dibutuhkan else 0
+
+    #hitung kategori
+    # Hitung jumlah temuan per kategori_kondisi
+    kategori_counts = (
+    audits.values("kategori_kondisi")
+          .annotate(jumlah=Count("id"))
+          .order_by()
+    )
+
+    # ubah jadi dict biar gampang dipakai di template
+    kategori_map = {k["kategori_kondisi"]: k["jumlah"] for k in kategori_counts}
+
+
+
     ctx = {
         "audit_session": session,
         "audits": audits,
         "koordinator_prodi": koordinator_prodi,
-        "chart_labels_json": json.dumps(chart_labels),   # ← untuk template radar
+        "chart_labels_json": json.dumps(chart_labels),  
         "chart_scores_json": json.dumps(chart_scores),
         "best_label": best_label,
         "worst_label": worst_label,
+        "total_dokumen_dibutuhkan": total_dokumen_dibutuhkan,
+        "belum_disipakan": belum_disipakan,
+        "persen_belum": persen_belum,
+        "kategori_map": kategori_map,
     }
     return render(request, "ami/laporan_internal.html", ctx)

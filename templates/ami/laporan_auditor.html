@@ -77,11 +77,11 @@
         <div class="flex flex-wrap gap-3 justify-center mt-5">
           <div class="px-3 py-2 rounded-full bg-blue-100 text-blue-800 text-sm">Total Elemen: <b>{{ stats.total }}</b></div>
           <!-- <div class="px-3 py-2 rounded-full bg-green-100 text-green-800 text-sm">Rata-rata skor audit: <b>{{ stats.avg_skor }}</b></div> -->
-          {% for k in stats.kategori %}
+         <!-- {% for k in stats.kategori %}
             <div class="px-3 py-2 rounded-full text-sm {{ k.kategori_kondisi|kategori_color }}">
               {{ k.kategori_kondisi|default:"-" }}: <b>{{ k.jumlah }}</b>
             </div>
-          {% endfor %}
+          {% endfor %} -->
         </div>
       </div>
     </div>
