@@ -1579,7 +1579,7 @@ def laporan_internal(request, session_id: int):
         KoordinatorProgramStudi.objects
         .select_related('program_studi')
         .filter(program_studi=session.program_studi)
-        .order_by('-id')  # atau '-created_at' jika ada timestamp
+        .order_by('-id')  
         .first())
     
     # rata-rata kriteria
@@ -1635,7 +1635,7 @@ def laporan_internal(request, session_id: int):
           .order_by()
     )
 
-    # ubah jadi dict biar gampang dipakai di template
+    
     kategori_map = {k["kategori_kondisi"]: k["jumlah"] for k in kategori_counts}
 
 
