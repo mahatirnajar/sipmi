@@ -1,58 +1,205 @@
+<!-- dashboard.html -->
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}Dashboard Admin - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
-{% block page_title %}Dashboard Admin{% endblock %}
-{% block page_subtitle %}Sistem Audit Mutu Internal - Universitas Tadulako{% endblock %}
-{% block mobile_title %}Dashboard Admin{% endblock %}
+{% block title %}Dashboard - Sistem Audit Mutu Internal | Universitas Tadulako{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}{{ page_subtitle }}{% endblock %}
+{% block mobile_title %}Dashboard{% endblock %}
 
 {% block content %}
 <div class="p-4 lg:p-6">
-    <!-- Stats Cards -->
+
+    {% if user_role == 'admin' %}
+    <!-- Stats Cards for Admin -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
         <div class="stats-card rounded-xl p-4 lg:p-6 text-white card-hover transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-white/80 text-xs lg:text-sm">Total Program Studi</p>
+                    <p class="text-sm lg:text-base font-medium text-white opacity-90">Total Program Studi</p>
                     <p class="text-2xl lg:text-3xl font-bold">{{ total_program_studi }}</p>
                 </div>
-                <i class="fas fa-graduation-cap text-2xl lg:text-4xl text-white/30"></i>
+                <i class="fas fa-graduation-cap text-3xl lg:text-4xl"></i>
             </div>
         </div>
         <div class="stats-card-2 rounded-xl p-4 lg:p-6 text-white card-hover transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-white/80 text-xs lg:text-sm">Auditor Aktif</p>
-                    <p class="text-2xl lg:text-3xl font-bold">{{ total_auditor }}</p>
+                    <p class="text-sm lg:text-base font-medium text-white opacity-90">Total Sesi Audit</p>
+                    <p class="text-2xl lg:text-3xl font-bold">{{ total_audit_session }}</p>
                 </div>
-                <i class="fas fa-user-tie text-2xl lg:text-4xl text-white/30"></i>
+                <i class="fas fa-calendar-alt text-3xl lg:text-4xl"></i>
             </div>
         </div>
         <div class="stats-card-3 rounded-xl p-4 lg:p-6 text-white card-hover transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-white/80 text-xs lg:text-sm">Sesi Audit Aktif</p>
-                    <p class="text-2xl lg:text-3xl font-bold">{{ total_audit_session }}</p>
+                    <p class="text-sm lg:text-base font-medium text-white opacity-90">Total Penilaian Diri</p>
+                    <p class="text-2xl lg:text-3xl font-bold">{{ total_penilaian_diri }}</p>
                 </div>
-                <i class="fas fa-calendar-alt text-2xl lg:text-4xl text-white/30"></i>
+                <i class="fas fa-clipboard-check text-3xl lg:text-4xl"></i>
             </div>
         </div>
         <div class="stats-card-4 rounded-xl p-4 lg:p-6 text-white card-hover transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-white/80 text-xs lg:text-sm">Laporan Selesai</p>
-                    <p class="text-2xl lg:text-3xl font-bold">{{ total_laporan_selesai }}</p>
+                    <p class="text-sm lg:text-base font-medium text-white opacity-90">Total Hasil Audit</p>
+                    <p class="text-2xl lg:text-3xl font-bold">{{ total_audit }}</p>
                 </div>
-                <i class="fas fa-file-alt text-2xl lg:text-4xl text-white/30"></i>
+                <i class="fas fa-search text-3xl lg:text-4xl"></i>
             </div>
         </div>
     </div>
-    
-    <!-- Quick Actions -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 card-hover transition-all duration-300">
-            <h3 class="text-base lg:text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
-            <div class="grid grid-cols-2 gap-3 lg:gap-4">
+
+    <!-- Recent Activity for Admin -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
+        <!-- Recent Audit Sessions -->
+        <div class="bg-white rounded-xl shadow-sm card-hover transition-all duration-300">
+            <div class="px-4 lg:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                <h3 class="text-base lg:text-lg font-semibold text-gray-900">Sesi Audit Terbaru</h3>
+                <a href="{% url 'ami:audit_session_list' %}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">Lihat Semua</a>
+            </div>
+            <div class="p-4 lg:p-6">
+                {% if latest_audit_sessions %}
+                    <ul class="space-y-3">
+                    {% for session in latest_audit_sessions %}
+                        <li class="flex items-start">
+                            <i class="fas fa-calendar-check text-green-500 mt-1 mr-3"></i>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ session.program_studi.nama }}</p>
+                                <p class="text-xs text-gray-500">Periode: {{ session.tahun_akademik }} {{ session.semester }}</p>
+                                <p class="text-xs text-gray-500">Status: <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">{{ session.get_status_display }}</span></p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-gray-500">Tidak ada sesi audit terbaru.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Penilaian Diri -->
+        <div class="bg-white rounded-xl shadow-sm card-hover transition-all duration-300">
+            <div class="px-4 lg:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                <h3 class="text-base lg:text-lg font-semibold text-gray-900">Penilaian Diri Terbaru</h3>
+                <a href="#" class="text-blue-600 hover:text-blue-900 text-sm font-medium">Lihat Semua</a>
+            </div>
+            <div class="p-4 lg:p-6">
+                {% if latest_penilaian_diri %}
+                    <ul class="space-y-3">
+                    {% for pd in latest_penilaian_diri %}
+                        <li class="flex items-start">
+                            <i class="fas fa-clipboard-check text-yellow-500 mt-1 mr-3"></i>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ pd.elemen.kode }} - {{ pd.elemen.nama }}</p>
+                                <p class="text-xs text-gray-500">Program Studi: {{ pd.audit_session.program_studi.nama }}</p>
+                                <p class="text-xs text-gray-500">Sesi: {{ pd.audit_session.tahun_akademik }} {{ pd.audit_session.semester }}</p>
+                                <p class="text-xs text-gray-500">Skor: {% if pd.skor %}{{ pd.skor }}{% else %}-{% endif %}</p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-gray-500">Tidak ada penilaian diri terbaru.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% elif user_role == 'koordinator' %}
+    <!-- Dashboard for Koordinator Prodi -->
+    <div class="bg-white rounded-xl shadow-sm card-hover transition-all duration-300 mb-6">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">Selamat Datang, {{ user.get_full_name|default:user.username }}</h2>
+            <p class="text-gray-600">Dashboard untuk Program Studi: <strong>{{ user_program_studi.nama }}</strong></p>
+        </div>
+        <div class="p-4 lg:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-blue-800">Sesi Aktif</h3>
+                    <p class="text-2xl font-bold text-blue-900">
+                        {% comment %} Ganti dengan logika untuk menghitung sesi aktif {% endcomment %}
+                        {{ audit_sessions|length }}
+                    </p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-green-800">Penilaian Diri Terisi</h3>
+                    <p class="text-2xl font-bold text-green-900">
+                        {% comment %} Ganti dengan logika untuk menghitung penilaian terisi {% endcomment %}
+                        {% comment %} Misalnya dari context jika sudah dihitung di view {% endcomment %}
+                        -
+                    </p>
+                </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Sesi Audit Terbaru untuk {{ user_program_studi.nama }}</h3>
+            {% if audit_sessions %}
+                <ul class="space-y-2">
+                {% for session in audit_sessions %}
+                    <li class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-medium">{{ session.tahun_akademik }} {{ session.semester }}</p>
+                        <p class="text-sm text-gray-600">Status: <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">{{ session.get_status_display }}</span></p>
+                        <a href="{% url 'ami:audit_session_detail' session.id %}" class="text-blue-600 text-sm mt-1 inline-block hover:underline">Detail Sesi</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">Tidak ada sesi audit saat ini.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif user_role == 'auditor' %}
+    <!-- Dashboard for Auditor -->
+    <div class="bg-white rounded-xl shadow-sm card-hover transition-all duration-300 mb-6">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">Selamat Datang, {{ user.get_full_name|default:user.username }}</h2>
+            <p class="text-gray-600">Dashboard untuk Tim Auditor</p>
+        </div>
+        <div class="p-4 lg:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-purple-800">Sesi Ditugaskan</h3>
+                    <p class="text-2xl font-bold text-purple-900">{{ audit_sessions|length }}</p>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-yellow-800">Audit Selesai</h3>
+                    <p class="text-2xl font-bold text-yellow-900">{{ audits|length }}</p>
+                </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Sesi Audit yang Ditugaskan</h3>
+            {% if audit_sessions %}
+                <ul class="space-y-2">
+                {% for session in audit_sessions %}
+                    <li class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-medium">{{ session.program_studi.nama }}</p>
+                        <p class="text-sm text-gray-600">{{ session.tahun_akademik }} {{ session.semester }}</p>
+                        <p class="text-sm text-gray-600">Status: <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">{{ session.get_status_display }}</span></p>
+                        <a href="{% url 'ami:audit_list' session.id %}" class="text-blue-600 text-sm mt-1 inline-block hover:underline">Lakukan Penilaian</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">Tidak ada sesi audit yang ditugaskan saat ini.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Fallback for unknown roles -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">Akses Terbatas</h2>
+        <p class="text-gray-600">Akun Anda belum terhubung dengan peran khusus (Koordinator Prodi atau Auditor). Silakan hubungi administrator.</p>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions (Opsional, bisa ditampilkan untuk semua role) -->
+    {% if user_role == 'admin' %}
+    <div class="bg-white rounded-xl shadow-sm card-hover transition-all duration-300">
+        <div class="px-4 lg:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-base lg:text-lg font-semibold text-gray-900">Aksi Cepat</h3>
+        </div>
+        <div class="p-4 lg:p-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <a href="{% url 'ami:audit_session_create' %}" class="flex flex-col items-center p-3 lg:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group">
                     <i class="fas fa-plus-circle text-xl lg:text-2xl text-blue-600 mb-2 group-hover:scale-110 transition-transform"></i>
                     <span class="text-xs lg:text-sm font-medium text-blue-700 text-center">Sesi Audit Baru</span>
@@ -61,119 +208,18 @@
                     <i class="fas fa-user-plus text-xl lg:text-2xl text-green-600 mb-2 group-hover:scale-110 transition-transform"></i>
                     <span class="text-xs lg:text-sm font-medium text-green-700 text-center">Tambah Auditor</span>
                 </a>
-                <a href="{% url 'ami:program_studi_create' %}" class="flex flex-col items-center p-3 lg:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group">
-                    <i class="fas fa-graduation-cap text-xl lg:text-2xl text-purple-600 mb-2 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs lg:text-sm font-medium text-purple-700 text-center">Program Studi</span>
+                <a href="{% url 'ami:program_studi_create' %}" class="flex flex-col items-center p-3 lg:p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors group">
+                    <i class="fas fa-graduation-cap text-xl lg:text-2xl text-yellow-600 mb-2 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-xs lg:text-sm font-medium text-yellow-700 text-center">Tambah Prodi</span>
                 </a>
-                <a href="{% url 'ami:audit_session_list' %}" class="flex flex-col items-center p-3 lg:p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors group">
-                    <i class="fas fa-chart-bar text-xl lg:text-2xl text-orange-600 mb-2 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs lg:text-sm font-medium text-orange-700 text-center">Lihat Laporan</span>
+                <a href="{% url 'ami:lembaga_akreditasi_create' %}" class="flex flex-col items-center p-3 lg:p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors group">
+                    <i class="fas fa-building text-xl lg:text-2xl text-red-600 mb-2 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-xs lg:text-sm font-medium text-red-700 text-center">Tambah Lembaga</span>
                 </a>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 card-hover transition-all duration-300">
-            <h3 class="text-base lg:text-lg font-semibold text-gray-900 mb-4">Aktivitas Terbaru</h3>
-            <div class="space-y-4">
-                {% for penilaian in latest_penilaian_diri %}
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="w-2 h-2 {% if forloop.counter0|divisibleby:3 %}bg-green-500{% elif forloop.counter0|divisibleby:2 %}bg-blue-500{% else %}bg-yellow-500{% endif %} rounded-full"></div>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-900">
-                                Penilaian diri {{ penilaian.indikator.nama }} disubmit
-                            </p>
-                            <p class="text-xs text-gray-500">
-                                {{ penilaian.tanggal_penilaian|timesince }} yang lalu
-                            </p>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="text-center py-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-500">Tidak ada aktivitas terbaru</p>
-                    </div>
-                {% endfor %}
-                
-                {% for session in latest_audit_sessions %}
-                    {% if forloop.counter <= 2 and not latest_penilaian_diri %}
-                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-2 h-2 {% if forloop.counter|divisibleby:3 %}bg-green-500{% elif forloop.counter|divisibleby:2 %}bg-blue-500{% else %}bg-yellow-500{% endif %} rounded-full"></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">
-                                    Audit {{ session.program_studi.nama }} {% if session.status == 'selesai' %}selesai{% else %}dijadwalkan{% endif %}
-                                </p>
-                                <p class="text-xs text-gray-500">
-                                    {{ session.tanggal_mulai_penilaian_mandiri|timesince }} yang lalu
-                                </p>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
     </div>
-    
-    <!-- Recent Audits Table -->
-    <div class="bg-white rounded-xl shadow-sm card-hover transition-all duration-300">
-        <div class="px-4 lg:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-            <h3 class="text-base lg:text-lg font-semibold text-gray-900">Sesi Audit Terbaru</h3>
-            <a href="{% url 'ami:audit_session_list' %}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">Lihat Semua</a>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Studi</th>
-                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Periode</th>
-                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Auditor</th>
-                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for session in latest_audit_sessions %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
-                            <div class="text-xs lg:text-sm font-medium text-gray-900">{{ session.program_studi.nama }}</div>
-                            <div class="text-xs text-gray-500">{{ session.program_studi.jenjang }} - {{ session.program_studi.akreditasi }}</div>
-                            <div class="text-xs text-gray-500 sm:hidden">{{ session.tahun_akademik }} Semester {{ session.get_semester_display }}</div>
-                        </td>
-                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900 hidden sm:table-cell">
-                            {{ session.tahun_akademik }} Semester {{ session.get_semester_display }}
-                        </td>
-                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-gray-900 hidden md:table-cell">
-                            {% if session.auditor_ketua %}
-                                {{ session.auditor_ketua.nama_lengkap }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap">
-                            {% if session.status == 'selesai' %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-green-100 text-green-800">Selesai</span>
-                            {% elif session.status == 'berlangsung' %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">Berlangsung</span>
-                            {% else %}
-                                <span class="px-1 py-0.5 lg:px-2 lg:py-1 text-xs lg:text-sm font-semibold rounded-full bg-blue-100 text-blue-800">Dijadwalkan</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-3 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm font-medium">
-                            <div class="flex flex-wrap gap-2">
-                                <a href="{% url 'ami:audit_session_detail' session.id %}" class="text-blue-600 hover:text-blue-900">Lihat</a>
-                                {% if session.status == 'selesai' %}
-                                    <a href="{% url 'ami:laporan_audit' session.id %}" class="text-green-600 hover:text-green-900">Laporan</a>
-                                {% else %}
-                                    <span class="text-gray-400 cursor-not-allowed">Laporan</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-4 lg:px-6 py-4 text-center text-gray-500 text-sm">Tidak ada sesi audit terbaru</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

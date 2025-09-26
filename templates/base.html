@@ -25,7 +25,7 @@
         body { font-family: 'Inter', sans-serif; }
         .sidebar-item:hover { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
         .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .gradient-bg {  background: linear-gradient(135deg, #ef4444 0%, #3b82f6 70%, #f59e0b 100%) }
+        .gradient-bg {  background: linear-gradient(135deg, #ef4444 0%, #3b82f6 30%, #f59e0b 100%) }
         .stats-card { background: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%); } /* Merah ke Kuning */
         .stats-card-2 { background: linear-gradient(135deg, #3b82f6 0%, #ef4444 100%); } /* Biru ke Merah */
         .stats-card-3 { background: linear-gradient(135deg, #f59e0b 0%, #3b82f6 100%); } /* Kuning ke Biru */
@@ -54,14 +54,17 @@
                 <span class="text-white font-bold text-lg">MUTUAL</span>
             </div>
         </div>
-        
+                
+        <!-- Batas NAV -->
         <nav class="flex-1 overflow-y-auto mt-8 px-4 pb-4">
             <div class="space-y-2">
                 <a href="{% url 'ami:dashboard' %}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-50 text-blue-600{% else %}hover:bg-gray-50{% endif %}">
                     <i class="fas fa-tachometer-alt mr-3"></i>
                     <span>Dashboard</span>
                 </a>
-                {% if user.is_staff %}
+
+                {% comment %} --- Master Data (Hanya untuk Admin) --- {% endcomment %}
+                {% if user.is_superuser %}
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Master Data</p>
                     <div class="mt-2 space-y-1">
@@ -79,46 +82,70 @@
                         </a>
                     </div>
                 </div>
-                {% endif %}
+                {% endif %} {# End of Admin Master Data #}
+
+                {% comment %} --- Audit Management (Akses bervariasi) --- {% endcomment %}
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Audit Management</p>
                     <div class="mt-2 space-y-1">
+
+                        {% comment %} --- Sesi Audit (Admin, Koordinator, Auditor) --- {% endcomment %}
                         <a href="{% url 'ami:audit_session_list' %}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'audit_session_list' %}bg-blue-50 text-blue-600{% else %}hover:bg-gray-50{% endif %}">
                             <i class="fas fa-calendar-alt mr-3"></i>
                             <span>Sesi Audit</span>
                         </a>
-                        {% comment %} <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-50">
+
+                        <!-- {% comment %} --- Penilaian Diri (Hanya untuk Koordinator Prodi) --- {% endcomment %}
+                        {% if user.koordinatorprogramstudi %}
+                        <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-50">
                             <i class="fas fa-clipboard-check mr-3"></i>
                             <span>Penilaian Diri</span>
                         </a>
+                        {% endif %}
+
+                        {% comment %} --- Audit (Hanya untuk Auditor) --- {% endcomment %}
+                        {% if user.auditor %}
                         <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-50">
                             <i class="fas fa-search mr-3"></i>
                             <span>Audit</span>
-                        </a> {% endcomment %}
+                        </a>
+                        {% endif %} -->
+
                     </div>
                 </div>
+
+                {% comment %} --- Laporan (Akses bervariasi) --- {% endcomment %}
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Laporan</p>
                     <div class="mt-2 space-y-1">
+
+                        {% comment %} --- Rekomendasi (Admin, Koordinator, Auditor) --- {% endcomment %}
                         <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-50">
                             <i class="fas fa-lightbulb mr-3"></i>
                             <span>Rekomendasi</span>
                         </a>
+
+                        {% comment %} --- Laporan Audit (Admin, Koordinator, Auditor) --- {% endcomment %}
                         <a href="{% url 'ami:laporan_index_audit' %}"
                             class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'laporan_index_audit' %}bg-blue-50 text-blue-600{% else %}hover:bg-gray-50{% endif %}">
-                             <i class="fas fa-file-alt mr-3"></i>
+                            <i class="fas fa-file-alt mr-3"></i>
                             <span>Laporan Audit</span>
                         </a>
 
+                        {% comment %} --- Laporan Auditor (Admin, Auditor) --- {% endcomment %}
+                        {% if user.auditor or user.is_superuser %}
                         <a href="{% url 'ami:laporan_index_auditor' %}"
                             class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'laporan_index_auditor' %}bg-blue-50 text-blue-600{% else %}hover:bg-gray-50{% endif %}">
                             <i class="fas fa-user-check mr-3"></i>
-                             <span>Laporan Auditor</span>
+                            <span>Laporan Auditor</span>
                         </a>
+                        {% endif %}
+
                     </div>
                 </div>
             </div>
         </nav>
+        <!-- Btas NAV -->
     </div>
 
     <!-- Main Content -->

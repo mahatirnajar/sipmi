@@ -91,62 +91,80 @@ def check_audit_session_permission(user, audit_session):
 # Dashboard Views
 # ----------------------------
 @login_required
+# ami/views.py (di dalam fungsi dashboard)
+@login_required
 def dashboard(request):
-    """View untuk halaman dashboard"""
-    # Hitung statistik untuk dashboard
-    total_program_studi = ProgramStudi.objects.count()
-    total_audit_session = AuditSession.objects.count()
-    total_penilaian_diri = PenilaianDiri.objects.count()
-    total_audit = Audit.objects.count()
-    
-    # Ambil beberapa data terbaru
-    latest_audit_sessions = AuditSession.objects.select_related('program_studi').order_by('-tanggal_mulai_penilaian_mandiri')[:5]
-    latest_penilaian_diri = PenilaianDiri.objects.select_related(
-        'audit_session', 'audit_session__program_studi', 'elemen'
-    ).order_by('-tanggal_penilaian')[:5]
-    
-    # # Data untuk grafik
-    # kriteria_data = []
-    # if latest_audit_sessions:
-    #     # Ambil sesi audit terbaru untuk data grafik
-    #     latest_session = latest_audit_sessions[0]
-    #     kriteria_list = latest_session.program_studi.lembaga_akreditasi.kriteria.all()
-        
-    #     for kriteria in kriteria_list:
-    #         # Hitung rata-rata skor untuk kriteria ini
-    #         total_skor = 0
-    #         count = 0
-            
-    #         for elemen in kriteria.elemen.all():
-    #             for indikator in elemen.indikator.all():
-    #                 try:
-    #                     penilaian = PenilaianDiri.objects.get(
-    #                         audit_session=latest_session,
-    #                         indikator=indikator
-    #                     )
-    #                     if penilaian.skor is not None:
-    #                         total_skor += penilaian.skor
-    #                         count += 1
-    #                 except PenilaianDiri.DoesNotExist:
-    #                     pass
-            
-    #         if count > 0:
-    #             rata_rata = total_skor / count
-    #             kriteria_data.append({
-    #                 'nama': kriteria.nama,
-    #                 'rata_rata': round(rata_rata, 2)
-    #             })
-    
+    """View untuk halaman dashboard - konten bervariasi per role"""
     context = {
-        'total_program_studi': total_program_studi,
-        'total_audit_session': total_audit_session,
-        'total_penilaian_diri': total_penilaian_diri,
-        'total_audit': total_audit,
-        'latest_audit_sessions': latest_audit_sessions,
-        'latest_penilaian_diri': latest_penilaian_diri,
-        # 'kriteria_data': kriteria_data,
+        'page_title': 'Dashboard',
+        'page_subtitle': 'Sistem Audit Mutu Internal - Universitas Tadulako',
     }
-    
+
+    if request.user.is_superuser:
+        # Dashboard untuk Admin
+        total_program_studi = ProgramStudi.objects.count()
+        total_audit_session = AuditSession.objects.count()
+        total_penilaian_diri = PenilaianDiri.objects.count()
+        total_audit = Audit.objects.count()
+        latest_audit_sessions = AuditSession.objects.select_related('program_studi').order_by('-tanggal_mulai_penilaian_mandiri')[:5]
+        latest_penilaian_diri = PenilaianDiri.objects.select_related('audit_session', 'audit_session__program_studi', 'elemen').order_by('-tanggal_penilaian')[:5]
+
+        context.update({
+            'total_program_studi': total_program_studi,
+            'total_audit_session': total_audit_session,
+            'total_penilaian_diri': total_penilaian_diri,
+            'total_audit': total_audit,
+            'latest_audit_sessions': latest_audit_sessions,
+            'latest_penilaian_diri': latest_penilaian_diri,
+            'user_role': 'admin' # Kirim role ke template
+        })
+
+    elif hasattr(request.user, 'koordinatorprogramstudi'):
+        # Dashboard untuk Koordinator Prodi
+        user_program_studi = request.user.koordinatorprogramstudi.program_studi
+        # Ambil sesi audit untuk program studi ini
+        audit_sessions = AuditSession.objects.filter(program_studi=user_program_studi).order_by('-tanggal_mulai_penilaian_mandiri')[:5]
+        # Ambil penilaian diri untuk program studi ini
+        penilaian_diri = PenilaianDiri.objects.filter(
+            audit_session__program_studi=user_program_studi
+        ).select_related('audit_session', 'elemen').order_by('-tanggal_penilaian')[:5]
+
+        context.update({
+            'user_program_studi': user_program_studi,
+            'audit_sessions': audit_sessions,
+            'penilaian_diri': penilaian_diri,
+            'user_role': 'koordinator' # Kirim role ke template
+        })
+
+    elif hasattr(request.user, 'auditor'):
+        # Dashboard untuk Auditor
+        user_auditor = request.user.auditor
+        # Ambil sesi audit yang ditugaskan ke auditor ini (sebagai ketua atau anggota)
+        audit_sessions = AuditSession.objects.filter(
+            Q(auditor_ketua=user_auditor) | Q(auditor_anggota=user_auditor)
+        ).distinct().order_by('-tanggal_mulai_penilaian_mandiri')[:5]
+        # Ambil hasil audit yang dibuat oleh auditor ini
+        audits = Audit.objects.filter(auditor=user_auditor).select_related(
+            'penilaian_diri__audit_session__program_studi',
+            'penilaian_diri__elemen'
+        ).order_by('-tanggal_audit')[:5]
+
+        context.update({
+            'user_auditor': user_auditor,
+            'audit_sessions': audit_sessions,
+            'audits': audits,
+            'user_role': 'auditor' # Kirim role ke template
+        })
+
+    else:
+        # Jika user login tapi tidak memiliki role yang dikenali (misalnya staff biasa tanpa role spesifik)
+        messages.warning(request, "Anda tidak memiliki akses penuh ke sistem ini.")
+        # Bisa redirect ke halaman default atau tampilkan pesan error
+        # return redirect('some_default_page') # Opsional
+        context.update({
+            'user_role': 'unknown'
+        })
+
     return render(request, 'ami/dashboard.html', context)
 
 # ----------------------------
