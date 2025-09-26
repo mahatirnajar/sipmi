@@ -66,8 +66,8 @@ def get_user_auditor(user):
 
 def check_program_studi_permission(user, program_studi):
     """Memeriksa apakah user memiliki izin untuk mengakses program studi tertentu"""
-    if user.is_superuser:
-        return True
+    # if user.is_superuser:
+    #     return True
     user_program_studi = get_user_program_studi(user)
     return user_program_studi == program_studi
 
