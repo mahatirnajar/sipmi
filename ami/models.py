@@ -86,6 +86,7 @@ class ProgramStudi(models.Model):
         ('FAPETKAN', 'FAPETKAN'),
         ('FKM', 'FKM'),
         ('Pascasarjana', 'Pascasarjana'),
+        
     ])
     jenjang = models.CharField(max_length=50, choices=[
         ('D3', 'Diploma 3'),
@@ -93,6 +94,7 @@ class ProgramStudi(models.Model):
         ('S1', 'Sarjana'),
         ('S2', 'Magister'),
         ('S3', 'Doktor'),
+        ('Profesi','Profesi')
     ])
     akreditasi = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('unggul', 'UNGGUL'),
