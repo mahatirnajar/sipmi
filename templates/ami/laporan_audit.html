@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static custom_filters %}
 
-{% block title %}Laporan Audit - {{ audit_session.program_studi.nama }} | Sistem Audit Mutu Internal{% endblock %}
-{% block page_title %}Laporan Audit{% endblock %}
+{% block title %}Rekap Penilaian Audit - {{ audit_session.program_studi.nama }} | Sistem Audit Mutu Internal{% endblock %}
+{% block page_title %}Rekap Penilaian Audit{% endblock %}
 {% block page_subtitle %}{{ audit_session.program_studi.nama }} ({{ audit_session.tahun_akademik }} Semester {{ audit_session.get_semester_display }}){% endblock %}
-{% block mobile_title %}Laporan Audit{% endblock %}
+{% block mobile_title %}Rekap Penilaian Audit{% endblock %}
 
 {% block content %}
 
@@ -40,7 +40,7 @@
             <i class="fas fa-university text-blue-600 text-2xl lg:text-3xl"></i>
           </div>
         </div>
-        <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1 lg:mb-2">Laporan Audit Mutu Internal</h1>
+        <h1 class="text-xl lg:text-2xl font-bold text-gray-900 mb-1 lg:mb-2">Rekap Penilaian Audit Mutu Internal</h1>
         <h2 class="text-lg lg:text-xl font-semibold text-gray-700 mb-3 lg:mb-6">
           {{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.nama }}
         </h2>
@@ -173,7 +173,7 @@
 </script>
 
 
-    <!-- Form Auditi (Nama & NIP) - layar saja -->
+    <!-- Form Auditi (Nama & NIP) 
     <form id="formAuditi" class="flex items-center flex-wrap gap-2 mb-6 print:hidden">
       <label for="namaAuditi" class="text-sm">Koordinator Program Studi:</label>
       <input type="text" id="namaAuditi" name="namaAuditi"
@@ -190,17 +190,17 @@
     <!--   <button type="button" onclick="applyAuditi(); window.print();"
               class="px-3 py-2 bg-gray-700 text-white text-sm rounded">
         Terapkan & Cetak
-      </button>-->
+      </button>
     </form>
     <p class="text-xs text-gray-500 mb-6 print:hidden">
       Silahkan mengisi AUDITI/Nama Ketua Program Studi, kemudian klik <b>Terapkan</b>.
-    </p>
+    </p>-->
 
-    <!-- Tanda Tangan -->
+    <!-- Tanda Tangan 
     <div class="bg-white rounded-xl shadow-sm p-4 lg:p-8 no-break">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 text-center">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 text-center">-->
 
-        <!-- Auditi (Program Studi) -->
+        <!-- Auditi (Program Studi) 
         <div class="flex flex-col items-center justify-between">
           <p class="text-gray-600 text-sm print:text-sm mb-2">
             Auditi {{ audit_session.program_studi.jenjang }} - {{ audit_session.program_studi.nama }}
@@ -209,18 +209,18 @@
           <div class="ttd-line"></div>
           <p id="auditiNama" class="font-bold text-gray-900 mt-2 print:text-sm">................................</p>
           <p id="auditiNip" class="text-gray-600 text-xs print:text-xs">NIP. ................................</p>
-        </div>
+        </div>-->
 
-        <!-- Ketua SPMI -->
+        <!-- Ketua SPMI 
         <div class="flex flex-col items-center justify-between">
           <p class="text-gray-600 text-sm print:text-sm mb-2">Ketua Pusat Penjaminan Mutu Internal</p>
           <div class="h-24 ttd-space flex items-center justify-center"></div>
           <div class="ttd-line"></div>
           <p class="font-bold text-gray-900 mt-2 print:text-sm">Prof. Dr. Ir. Sakka Samudin, MP.</p>
           <p class="text-gray-600 text-xs print:text-xs">NIP. ................................</p>
-        </div>
+        </div>-->
 
-        <!-- Ketua LPMPP -->
+        <!-- Ketua LPMPP 
         <div class="flex flex-col items-center justify-between">
           <p class="text-gray-600 text-sm print:text-sm mb-2">
             Ketua Lembaga Penjaminan Mutu dan Pengembangan Pembelajaran<br class="print:hidden">
@@ -233,9 +233,9 @@
         </div>
 
       </div>
-    </div>
+    </div>-->
 
-    <!-- JS apply -->
+    <!-- JS apply 
     <script>
       function applyAuditi() {
         const nama = document.getElementById("namaAuditi").value || "................................";
@@ -243,7 +243,7 @@
         document.getElementById("auditiNama").innerText = nama;
         document.getElementById("auditiNip").innerText  = "NIP. " + nip;
       }
-    </script>
+    </script>-->
 
   </div>
 </div>
