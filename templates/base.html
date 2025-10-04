@@ -37,7 +37,7 @@
     
 
     <!-- Mobile Menu Button -->
-    <div class="lg:hidden fixed top-4 left-4 z-50">
+    <div class="lg:hidden fixed top-4 left-4 z-50 print:hidden">
         <button id="mobileMenuButton" class="bg-white p-2 rounded-lg shadow-lg">
             <i class="fas fa-bars text-gray-600"></i>
         </button>
@@ -56,7 +56,7 @@
         </div>
                 
         <!-- Batas NAV -->
-        <nav class="flex-1 overflow-y-auto mt-8 px-4 pb-4">
+        <nav class="flex-1 overflow-y-auto mt-8 px-4 pb-4 ">
             <div class="space-y-2">
                 <a href="{% url 'ami:dashboard' %}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-50 text-blue-600{% else %}hover:bg-gray-50{% endif %}">
                     <i class="fas fa-tachometer-alt mr-3"></i>
@@ -152,7 +152,7 @@
     <div class="lg:ml-64 flex flex-col min-h-screen">
         <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200">
-            <div class="flex items-center justify-between px-4 lg:px-6 py-4">
+            <div class="flex items-center justify-between px-4 lg:px-6 py-4 print:hidden ">
                 <div class="lg:block hidden">
                     <h1 class="text-xl lg:text-2xl font-bold text-gray-900">{% block page_title %}{% endblock %}</h1>
                     <p class="text-gray-600">{% block page_subtitle %}{% endblock %}</p>
@@ -165,7 +165,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div class="relative">
+                    <div class="relative print:hidden">
                         <button id="profileButton" class="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
                             <i class="fas fa-user-circle text-gray-600"></i>
                             <span class="text-gray-700 font-medium">{{ user.get_full_name|default:user.username }}</span>
@@ -173,7 +173,7 @@
                         </button>
                         
                         <!-- Dropdown Menu -->
-                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 opacity-0 invisible transform scale-95 transition-all duration-200">
+                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 opacity-0 invisible transform scale-95 transition-all duration-200 ">
                             <div class="px-4 py-2 border-b border-gray-100">
                                 <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
                                 <p class="text-xs text-gray-500">{{ user.email }}</p>
